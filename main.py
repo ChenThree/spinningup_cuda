@@ -34,16 +34,16 @@ def args_parser():
                         help='policy net learning rate (only for DDPG)')
     parser.add_argument(
         '--warmup',
-        default=10000,
+        default=50000,
         type=int,
         help='time without training but only filling the replay memory')
     parser.add_argument('--discount', default=0.99, type=float, help='')
     parser.add_argument('--batch-size',
-                        default=1024,
+                        default=512,
                         type=int,
                         help='minibatch size')
     parser.add_argument('--memory-size',
-                        default=6000000,
+                        default=5000000,
                         type=int,
                         help='memory size')
     parser.add_argument('--window_length', default=1, type=int, help='')
@@ -71,11 +71,11 @@ def args_parser():
                         type=int,
                         help='how many steps to perform a validate experiment')
     parser.add_argument('--train_iter',
-                        default=400000,
+                        default=1000000,
                         type=int,
                         help='train iters each timestep')
     parser.add_argument('--epsilon_decay',
-                        default=100000,
+                        default=200000,
                         type=int,
                         help='linear decay of exploration policy')
     parser.add_argument('--resume',
