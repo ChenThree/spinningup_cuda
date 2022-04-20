@@ -217,7 +217,8 @@ class DDPG(object):
 
     def select_action(self, s_t, decay_epsilon=True):
         self.eval()
-        action = self.actor(to_tensor(np.array([s_t])))
+        with torch.no_grad():
+            action = self.actor(to_tensor(np.array([s_t])))
         action = action.cpu().data.numpy().squeeze(0)
         action += self.is_training * max(self.epsilon,
                                          0) * self.random_process.sample()

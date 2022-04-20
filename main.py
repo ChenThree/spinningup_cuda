@@ -106,8 +106,7 @@ def train(agent: DDPG, env, evaluate, args, debug=True):
         if step <= args.warmup:
             action = agent.random_action()
         else:
-            with torch.no_grad():
-                action = agent.select_action(observation)
+            action = agent.select_action(observation)
 
         # env response with next_observation, reward, terminate_info
         observation2, reward, done, info = env.step(action)
@@ -122,8 +121,7 @@ def train(agent: DDPG, env, evaluate, args, debug=True):
 
         # [optional] evaluate
         if evaluate is not None and args.validate_steps > 0 and step % args.validate_steps == 0:
-            with torch.no_grad():
-                policy = lambda x: agent.select_action(x, decay_epsilon=False)
+            policy = lambda x: agent.select_action(x, decay_epsilon=False)
             validate_reward = evaluate(env,
                                        policy,
                                        debug=False,
@@ -149,15 +147,28 @@ def train(agent: DDPG, env, evaluate, args, debug=True):
                     '#{}: episode_reward: {:.2f}   steps: {}   speed: {:.2f} steps/s   estimate: {:.2f} s'
                     .format(episode, episode_reward, step, speed,
                             (args.train_iter - step) / speed))
-            with torch.no_grad():
-                agent.memory.append(observation,
-                                    agent.select_action(observation), 0., False)
+            agent.memory.append(observation, agent.select_action(observation),
+                                0., False)
 
             # reset
             observation = None
             episode_steps = 0
             episode_reward = 0.
             episode += 1
+
+
+def test(agent: DDPG, env, evaluate, args, visualize=True, debug=True):
+    agent.load_weights(args.resume)
+    agent.is_training = False
+    agent.eval()
+    policy = lambda x: agent.select_action(x, decay_epsilon=False)
+    for i in range(args.validate_episodes):
+        validate_reward = evaluate(env,
+                                   policy,
+                                   debug=debug,
+                                   visualize=visualize,
+                                   save=False)
+        print(validate_reward)
 
 
 class NormalizedEnv(gym.ActionWrapper):
@@ -192,8 +203,10 @@ def main():
                          args.validate_steps,
                          args.output,
                          max_episode_length=args.max_episode_length)
-
-    train(agent, env, evaluate, args)
+    if args.mode == 'train':
+        train(agent, env, evaluate, args)
+    else:
+        test(agent, env, evaluate, args, visualize=True)
     env.close()
 
 
