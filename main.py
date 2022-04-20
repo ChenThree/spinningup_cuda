@@ -90,9 +90,8 @@ def args_parser():
 
 
 def train(agent: DDPG, env, evaluate, args, debug=True):
-
-    agent.is_training = True
     last_time = time.time()
+    agent.is_training = True
     step = episode = episode_steps = 0
     episode_reward = 0.
     observation = None
@@ -106,6 +105,8 @@ def train(agent: DDPG, env, evaluate, args, debug=True):
         if step <= args.warmup:
             action = agent.random_action()
         else:
+            if step == args.warmup:
+                last_time = time.time()
             action = agent.select_action(observation)
 
         # env response with next_observation, reward, terminate_info
@@ -142,7 +143,10 @@ def train(agent: DDPG, env, evaluate, args, debug=True):
 
         if done:  # end of episode
             if debug:
-                speed = step / (time.time() - last_time)
+                if step < args.warmup:
+                    speed = step / (time.time() - last_time)
+                else:
+                    speed = (step - args.warmup) / (time.time() - last_time)
                 print(
                     '#{}: episode_reward: {:.2f}   steps: {}   speed: {:.2f} steps/s   estimate: {:.2f} s'
                     .format(episode, episode_reward, step, speed,

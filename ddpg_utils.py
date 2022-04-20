@@ -9,7 +9,8 @@ from torch.autograd import Variable
 from memory import SequentialMemory
 from random_process import OrnsteinUhlenbeckProcess
 
-network_size = 256
+network_size = 512
+factor = 4
 
 
 class Actor(nn.Module):
@@ -17,11 +18,11 @@ class Actor(nn.Module):
     def __init__(self, num_states, num_actions):
         super().__init__()
         self.mlp = nn.Sequential(nn.Linear(num_states, network_size),
-                                 nn.LeakyReLU(),
-                                 nn.Linear(network_size, network_size * 2),
-                                 nn.LeakyReLU(),
-                                 nn.Linear(network_size * 2, network_size),
-                                 nn.LeakyReLU(),
+                                 nn.LayerNorm(network_size), nn.GELU(),
+                                 nn.Linear(network_size, network_size * factor),
+                                 nn.LayerNorm(network_size * factor), nn.GELU(),
+                                 nn.Linear(network_size * factor, network_size),
+                                 nn.LayerNorm(network_size), nn.GELU(),
                                  nn.Linear(network_size, num_actions),
                                  nn.Tanh())
         self.init_weights()
@@ -48,17 +49,13 @@ class Critic(nn.Module):
 
     def __init__(self, num_states, num_actions):
         super().__init__()
-        self.mlp1 = nn.Sequential(
-            nn.Linear(num_states, network_size),
-            nn.LeakyReLU(),
-        )
-        self.mlp2 = nn.Sequential(
-            nn.Linear(network_size + num_actions, network_size * 2),
-            nn.LeakyReLU(),
-            nn.Linear(network_size * 2, network_size),
-            nn.LeakyReLU(),
-            nn.Linear(network_size, 1),
-        )
+        self.mlp = nn.Sequential(
+            nn.Linear(num_states + num_actions, network_size),
+            nn.LayerNorm(network_size), nn.GELU(),
+            nn.Linear(network_size, network_size * factor),
+            nn.LayerNorm(network_size * factor), nn.GELU(),
+            nn.Linear(network_size * factor, network_size),
+            nn.LayerNorm(network_size), nn.GELU(), nn.Linear(network_size, 1))
         self.init_weights()
 
     def init_weights(self):
@@ -76,10 +73,7 @@ class Critic(nn.Module):
                     nn.init.constant_(m.bias, 0)
 
     def forward(self, xs):
-        x, a = xs
-        out = self.mlp1(x)
-        out = self.mlp2(torch.cat([out, a], 1))
-        return out
+        return self.mlp(torch.cat(xs, 1))
 
 
 def to_tensor(ndarray, requires_grad=False, dtype=torch.cuda.FloatTensor):
