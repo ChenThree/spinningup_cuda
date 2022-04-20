@@ -164,6 +164,9 @@ class DDPG(object):
         criterion = nn.MSELoss()
         value_loss = criterion(q_batch, target_q_batch)
         value_loss.backward()
+        # clamp grad
+        for param in self.critic.parameters():
+            param.grad.data.clamp_(-1, 1)
         self.critic_optim.step()
 
         # Actor update
@@ -175,6 +178,9 @@ class DDPG(object):
 
         policy_loss = policy_loss.mean()
         policy_loss.backward()
+        # clamp grad
+        for param in self.actor.parameters():
+            param.grad.data.clamp_(-1, 1)
         self.actor_optim.step()
 
         # Target update
