@@ -5,7 +5,11 @@ from scipy.io import savemat
 
 class Evaluator(object):
 
-    def __init__(self, num_episodes, interval, save_path='', max_episode_length=None):
+    def __init__(self,
+                 num_episodes,
+                 interval,
+                 save_path='',
+                 max_episode_length=None):
         self.num_episodes = num_episodes
         self.max_episode_length = max_episode_length
         self.interval = interval
@@ -37,7 +41,7 @@ class Evaluator(object):
                 if self.max_episode_length and episode_steps >= self.max_episode_length - 1:
                     done = True
 
-                if visualize:
+                if visualize and episode == 0:
                     env.render(mode='human')
 
                 # update
@@ -45,7 +49,8 @@ class Evaluator(object):
                 episode_steps += 1
 
             if debug:
-                print('[Evaluate] #Episode{}: episode_reward:{}'.format(episode, episode_reward))
+                print('[Evaluate] #Episode{}: episode_reward:{}'.format(
+                    episode, episode_reward))
             result.append(episode_reward)
 
         result = np.array(result).reshape(-1, 1)

@@ -242,9 +242,11 @@ class DDPG(object):
 
         self.critic.load_state_dict(torch.load('{}/critic.pkl'.format(output)))
 
-    def save_model(self, output):
-        torch.save(self.actor.state_dict(), '{}/actor.pkl'.format(output))
-        torch.save(self.critic.state_dict(), '{}/critic.pkl'.format(output))
+    def save_model(self, output, iter):
+        torch.save(self.actor.state_dict(),
+                   '{}/actor_{}.pkl'.format(output, iter))
+        torch.save(self.critic.state_dict(),
+                   '{}/critic_{}.pkl'.format(output, iter))
 
     def seed(self, s):
         torch.manual_seed(s)

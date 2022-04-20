@@ -79,7 +79,7 @@ def args_parser():
                         type=int,
                         help='linear decay of exploration policy')
     parser.add_argument('--resume',
-                        default='default',
+                        default=None,
                         type=str,
                         help='Resuming model path for testing')
     parser.add_argument('--output',
@@ -133,8 +133,8 @@ def train(agent: DDPG, env, evaluate, args, debug=True):
                     step, validate_reward))
 
         # [optional] save intermideate model
-        if step % int(args.train_iter / 3) == 0:
-            agent.save_model(args.output)
+        if step % int(args.train_iter / 5) == 0:
+            agent.save_model(args.output, step)
 
         # update
         step += 1
@@ -160,21 +160,34 @@ def train(agent: DDPG, env, evaluate, args, debug=True):
             episode += 1
 
 
+class NormalizedEnv(gym.ActionWrapper):
+    """ Wrap action """
+
+    def action(self, action):
+        act_k = (self.action_space.high - self.action_space.low) / 2.
+        act_b = (self.action_space.high + self.action_space.low) / 2.
+        return act_k * action + act_b
+
+    def reverse_action(self, action):
+        act_k_inv = 2. / (self.action_space.high - self.action_space.low)
+        act_b = (self.action_space.high + self.action_space.low) / 2.
+        return act_k_inv * (action - act_b)
+
+
 def main():
     # read args
     args = args_parser()
     # prepare sim env
     # action: 12 * [-1, 1] observation: 61 * [-inf, inf]
-    env = gym.make(env_name)
+    env = NormalizedEnv(gym.make(env_name))
     env.reset()
+    num_states = env.observation_space.shape[0]
+    num_actions = env.action_space.shape[0]
     # set random seed
     np.random.seed(args.seed)
     env.seed(args.seed)
 
-    nb_states = env.observation_space.shape[0]
-    nb_actions = env.action_space.shape[0]
-
-    agent = DDPG(nb_states, nb_actions, args)
+    agent = DDPG(num_states, num_actions, args)
     evaluate = Evaluator(args.validate_episodes,
                          args.validate_steps,
                          args.output,
