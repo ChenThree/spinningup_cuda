@@ -1,5 +1,6 @@
 import argparse
 import os
+import time
 from copy import deepcopy
 
 import gym
@@ -38,7 +39,7 @@ def args_parser():
         help='time without training but only filling the replay memory')
     parser.add_argument('--discount', default=0.99, type=float, help='')
     parser.add_argument('--batch-size',
-                        default=2048,
+                        default=1024,
                         type=int,
                         help='minibatch size')
     parser.add_argument('--memory-size',
@@ -61,16 +62,16 @@ def args_parser():
     parser.add_argument('--ou_mu', default=0.0, type=float, help='noise mu')
     parser.add_argument(
         '--validate_episodes',
-        default=200,
+        default=100,
         type=int,
         help='how many episode to perform during validate experiment')
     parser.add_argument('--max_episode_length', default=2000, type=int, help='')
     parser.add_argument('--validate_steps',
-                        default=5000,
+                        default=20000,
                         type=int,
                         help='how many steps to perform a validate experiment')
     parser.add_argument('--train_iter',
-                        default=200000,
+                        default=400000,
                         type=int,
                         help='train iters each timestep')
     parser.add_argument('--epsilon_decay',
@@ -91,6 +92,7 @@ def args_parser():
 def train(agent: DDPG, env, evaluate, args, debug=True):
 
     agent.is_training = True
+    last_time = time.time()
     step = episode = episode_steps = 0
     episode_reward = 0.
     observation = None
@@ -142,8 +144,11 @@ def train(agent: DDPG, env, evaluate, args, debug=True):
 
         if done:  # end of episode
             if debug:
-                print('#{}: episode_reward:{} steps:{}'.format(
-                    episode, episode_reward, step))
+                speed = step / (time.time() - last_time)
+                print(
+                    '#{}: episode_reward: {:.2f}   steps: {}   speed: {:.2f} steps/s   estimate: {:.2f} s'
+                    .format(episode, episode_reward, step, speed,
+                            (args.train_iter - step) / speed))
             with torch.no_grad():
                 agent.memory.append(observation,
                                     agent.select_action(observation), 0., False)
