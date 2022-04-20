@@ -5,43 +5,90 @@ from copy import deepcopy
 import gym
 import numpy as np
 import robel
+import torch
 
 from ddpg_utils import DDPG
 from evaluator import Evaluator
 
 os.environ['CUDA_VISIBLE_DEVICES'] = '0'
+torch.backends.cudnn.enabled = True
+torch.backends.cudnn.benchmark = False
 env_name = 'DKittyStandFixed-v0'
-episode_count = 10
-episode_length = 1000
-visualize = True
 
 
 def args_parser():
     parser = argparse.ArgumentParser(description='DDPG DKiity')
-    parser.add_argument('--mode', default='train', type=str, help='support option: train/test')
+    parser.add_argument('--mode',
+                        default='train',
+                        type=str,
+                        help='support option: train/test')
     parser.add_argument('--seed', default=2, type=int, help='random seed')
-    parser.add_argument('--rate', default=0.001, type=float, help='learning rate')
-    parser.add_argument('--prate', default=0.0001, type=float, help='policy net learning rate (only for DDPG)')
-    parser.add_argument('--warmup', default=10000, type=int, help='time without training but only filling the replay memory')
+    parser.add_argument('--rate',
+                        default=0.001,
+                        type=float,
+                        help='learning rate')
+    parser.add_argument('--prate',
+                        default=0.0001,
+                        type=float,
+                        help='policy net learning rate (only for DDPG)')
+    parser.add_argument(
+        '--warmup',
+        default=10000,
+        type=int,
+        help='time without training but only filling the replay memory')
     parser.add_argument('--discount', default=0.99, type=float, help='')
-    parser.add_argument('--batch-size', default=1024, type=int, help='minibatch size')
-    parser.add_argument('--memory-size', default=6000000, type=int, help='memory size')
+    parser.add_argument('--batch-size',
+                        default=2048,
+                        type=int,
+                        help='minibatch size')
+    parser.add_argument('--memory-size',
+                        default=6000000,
+                        type=int,
+                        help='memory size')
     parser.add_argument('--window_length', default=1, type=int, help='')
-    parser.add_argument('--tau', default=0.001, type=float, help='moving average for target network')
-    parser.add_argument('--ou_theta', default=0.15, type=float, help='noise theta')
-    parser.add_argument('--ou_sigma', default=0.2, type=float, help='noise sigma')
+    parser.add_argument('--tau',
+                        default=0.001,
+                        type=float,
+                        help='moving average for target network')
+    parser.add_argument('--ou_theta',
+                        default=0.15,
+                        type=float,
+                        help='noise theta')
+    parser.add_argument('--ou_sigma',
+                        default=0.2,
+                        type=float,
+                        help='noise sigma')
     parser.add_argument('--ou_mu', default=0.0, type=float, help='noise mu')
-    parser.add_argument('--validate_episodes', default=20, type=int, help='how many episode to perform during validate experiment')
-    parser.add_argument('--max_episode_length', default=500, type=int, help='')
-    parser.add_argument('--validate_steps', default=2000, type=int, help='how many steps to perform a validate experiment')
-    parser.add_argument('--train_iter', default=1000000, type=int, help='train iters each timestep')
-    parser.add_argument('--epsilon_decay', default=50000, type=int, help='linear decay of exploration policy')
-    parser.add_argument('--resume', default='default', type=str, help='Resuming model path for testing')
-    parser.add_argument('--output', default='./checkpoint', type=str, help='output path')
+    parser.add_argument(
+        '--validate_episodes',
+        default=200,
+        type=int,
+        help='how many episode to perform during validate experiment')
+    parser.add_argument('--max_episode_length', default=2000, type=int, help='')
+    parser.add_argument('--validate_steps',
+                        default=5000,
+                        type=int,
+                        help='how many steps to perform a validate experiment')
+    parser.add_argument('--train_iter',
+                        default=200000,
+                        type=int,
+                        help='train iters each timestep')
+    parser.add_argument('--epsilon_decay',
+                        default=100000,
+                        type=int,
+                        help='linear decay of exploration policy')
+    parser.add_argument('--resume',
+                        default='default',
+                        type=str,
+                        help='Resuming model path for testing')
+    parser.add_argument('--output',
+                        default='./checkpoint',
+                        type=str,
+                        help='output path')
     return parser.parse_args()
 
 
-def train(agent: DDPG, env, evaluate, args, max_episode_length=None, debug=True):
+def train(agent: DDPG, env, evaluate, args, debug=True):
 
     agent.is_training = True
     step = episode = episode_steps = 0
@@ -57,12 +104,13 @@ def train(agent: DDPG, env, evaluate, args, max_episode_length=None, debug=True)
         if step <= args.warmup:
             action = agent.random_action()
         else:
-            action = agent.select_action(observation)
+            with torch.no_grad():
+                action = agent.select_action(observation)
 
         # env response with next_observation, reward, terminate_info
         observation2, reward, done, info = env.step(action)
         observation2 = deepcopy(observation2)
-        if max_episode_length and episode_steps >= max_episode_length - 1:
+        if args.max_episode_length and episode_steps >= args.max_episode_length - 1:
             done = True
 
         # agent observe and update policy
@@ -72,10 +120,15 @@ def train(agent: DDPG, env, evaluate, args, max_episode_length=None, debug=True)
 
         # [optional] evaluate
         if evaluate is not None and args.validate_steps > 0 and step % args.validate_steps == 0:
-            policy = lambda x: agent.select_action(x, decay_epsilon=False)
-            validate_reward = evaluate(env, policy, debug=False, visualize=False)
+            with torch.no_grad():
+                policy = lambda x: agent.select_action(x, decay_epsilon=False)
+            validate_reward = evaluate(env,
+                                       policy,
+                                       debug=False,
+                                       visualize=False)
             if debug:
-                print('[Evaluate] Step_{:07d}: mean_reward:{}'.format(step, validate_reward))
+                print('[Evaluate] Step_{:07d}: mean_reward:{}'.format(
+                    step, validate_reward))
 
         # [optional] save intermideate model
         if step % int(args.train_iter / 3) == 0:
@@ -89,9 +142,11 @@ def train(agent: DDPG, env, evaluate, args, max_episode_length=None, debug=True)
 
         if done:  # end of episode
             if debug:
-                print('#{}: episode_reward:{} steps:{}'.format(episode, episode_reward, step))
-
-            agent.memory.append(observation, agent.select_action(observation), 0., False)
+                print('#{}: episode_reward:{} steps:{}'.format(
+                    episode, episode_reward, step))
+            with torch.no_grad():
+                agent.memory.append(observation,
+                                    agent.select_action(observation), 0., False)
 
             # reset
             observation = None
@@ -115,9 +170,12 @@ def main():
     nb_actions = env.action_space.shape[0]
 
     agent = DDPG(nb_states, nb_actions, args)
-    evaluate = Evaluator(args.validate_episodes, args.validate_steps, args.output, max_episode_length=args.max_episode_length)
+    evaluate = Evaluator(args.validate_episodes,
+                         args.validate_steps,
+                         args.output,
+                         max_episode_length=args.max_episode_length)
 
-    train(agent, env, evaluate, args, max_episode_length=args.max_episode_length)
+    train(agent, env, evaluate, args)
     env.close()
 
 

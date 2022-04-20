@@ -9,13 +9,21 @@ from torch.autograd import Variable
 from memory import SequentialMemory
 from random_process import OrnsteinUhlenbeckProcess
 
+network_size = 256
+
 
 class Actor(nn.Module):
 
     def __init__(self, num_states, num_actions):
         super().__init__()
-        self.mlp = nn.Sequential(nn.Linear(num_states, 128), nn.BatchNorm1d(128), nn.LeakyReLU(), nn.Linear(128, 256), nn.BatchNorm1d(256), nn.LeakyReLU(),
-                                 nn.Linear(256, 128), nn.BatchNorm1d(128), nn.LeakyReLU(), nn.Linear(128, num_actions), nn.Tanh())
+        self.mlp = nn.Sequential(nn.Linear(num_states, network_size),
+                                 nn.LeakyReLU(),
+                                 nn.Linear(network_size, network_size * 2),
+                                 nn.LeakyReLU(),
+                                 nn.Linear(network_size * 2, network_size),
+                                 nn.LeakyReLU(),
+                                 nn.Linear(network_size, num_actions),
+                                 nn.Tanh())
         self.init_weights()
 
     def init_weights(self):
@@ -41,18 +49,15 @@ class Critic(nn.Module):
     def __init__(self, num_states, num_actions):
         super().__init__()
         self.mlp1 = nn.Sequential(
-            nn.Linear(num_states, 128),
-            nn.BatchNorm1d(128),
+            nn.Linear(num_states, network_size),
             nn.LeakyReLU(),
         )
         self.mlp2 = nn.Sequential(
-            nn.Linear(128 + num_actions, 256),
-            nn.BatchNorm1d(256),
+            nn.Linear(network_size + num_actions, network_size * 2),
             nn.LeakyReLU(),
-            nn.Linear(256, 128),
-            nn.BatchNorm1d(128),
+            nn.Linear(network_size * 2, network_size),
             nn.LeakyReLU(),
-            nn.Linear(128, 1),
+            nn.Linear(network_size, 1),
         )
         self.init_weights()
 
@@ -78,12 +83,14 @@ class Critic(nn.Module):
 
 
 def to_tensor(ndarray, requires_grad=False, dtype=torch.cuda.FloatTensor):
-    return Variable(torch.from_numpy(ndarray), requires_grad=requires_grad).type(dtype)
+    return Variable(torch.from_numpy(ndarray),
+                    requires_grad=requires_grad).type(dtype)
 
 
 def soft_update(target, source, tau):
     for target_param, param in zip(target.parameters(), source.parameters()):
-        target_param.data.copy_(target_param.data * (1.0 - tau) + param.data * tau)
+        target_param.data.copy_(target_param.data * (1.0 - tau) +
+                                param.data * tau)
 
 
 def hard_update(target, source):
@@ -110,12 +117,17 @@ class DDPG(object):
         self.critic_target = Critic(self.num_states, self.num_actions)
         self.critic_optim = optim.Adam(self.critic.parameters(), lr=args.rate)
 
-        hard_update(self.actor_target, self.actor)  # Make sure target is with the same weight
+        hard_update(self.actor_target,
+                    self.actor)  # Make sure target is with the same weight
         hard_update(self.critic_target, self.critic)
 
         # Create replay buffer
-        self.memory = SequentialMemory(limit=args.memory_size, window_length=args.window_length)
-        self.random_process = OrnsteinUhlenbeckProcess(size=num_actions, theta=args.ou_theta, mu=args.ou_mu, sigma=args.ou_sigma)
+        self.memory = SequentialMemory(limit=args.memory_size,
+                                       window_length=args.window_length)
+        self.random_process = OrnsteinUhlenbeckProcess(size=num_actions,
+                                                       theta=args.ou_theta,
+                                                       mu=args.ou_mu,
+                                                       sigma=args.ou_sigma)
 
         # Hyper-parameters
         self.batch_size = args.batch_size
@@ -157,7 +169,9 @@ class DDPG(object):
         # Actor update
         self.actor.zero_grad()
 
-        policy_loss = -self.critic([to_tensor(state_batch), self.actor(to_tensor(state_batch))])
+        policy_loss = -self.critic(
+            [to_tensor(state_batch),
+             self.actor(to_tensor(state_batch))])
 
         policy_loss = policy_loss.mean()
         policy_loss.backward()
@@ -199,7 +213,8 @@ class DDPG(object):
         self.eval()
         action = self.actor(to_tensor(np.array([s_t])))
         action = action.cpu().data.numpy().squeeze(0)
-        action += self.is_training * max(self.epsilon, 0) * self.random_process.sample()
+        action += self.is_training * max(self.epsilon,
+                                         0) * self.random_process.sample()
         action = np.clip(action, -1., 1.)
 
         if decay_epsilon:
