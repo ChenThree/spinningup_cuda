@@ -1,5 +1,6 @@
 python main_ddpg.py \
---output checkpoint2 \
+--env DKittyWalkRandom-v0 \
+--output ./checkpoint/ddpg2 \
 --batch-size 1024 \
 --rate 0.001 \
 --prate 0.0001 \

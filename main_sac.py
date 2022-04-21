@@ -14,7 +14,7 @@ from ddpg_utils.evaluator import Evaluator
 os.environ['CUDA_VISIBLE_DEVICES'] = '0'
 torch.backends.cudnn.enabled = True
 torch.backends.cudnn.benchmark = False
-env_name = 'DKittyStandRandom-v0'
+env_name = ''
 
 
 def args_parser():

@@ -14,11 +14,14 @@ from ddpg_utils.evaluator import Evaluator
 os.environ['CUDA_VISIBLE_DEVICES'] = '0'
 torch.backends.cudnn.enabled = True
 torch.backends.cudnn.benchmark = False
-env_name = 'DKittyStandRandom-v0'
 
 
 def args_parser():
     parser = argparse.ArgumentParser(description='DDPG DKiity')
+    parser.add_argument('--env',
+                        default='DKittyStandRandom-v0',
+                        type=str,
+                        help='environment name')
     parser.add_argument('--mode',
                         default='train',
                         type=str,
@@ -83,7 +86,7 @@ def args_parser():
                         type=str,
                         help='Resuming model path for testing')
     parser.add_argument('--output',
-                        default='./checkpoint',
+                        default='./checkpoint/ddpg1',
                         type=str,
                         help='output path')
     return parser.parse_args()
@@ -194,7 +197,7 @@ def main():
     args = args_parser()
     # prepare sim env
     # action: 12 * [-1, 1] observation: 61 * [-inf, inf]
-    env = NormalizedEnv(gym.make(env_name))
+    env = NormalizedEnv(gym.make(args.env))
     env.reset()
     num_states = env.observation_space.shape[0]
     num_actions = env.action_space.shape[0]
