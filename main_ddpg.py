@@ -46,12 +46,12 @@ def args_parser():
                         type=int,
                         help='minibatch size')
     parser.add_argument('--memory-size',
-                        default=5000000,
+                        default=1000000,
                         type=int,
                         help='memory size')
     parser.add_argument('--window_length', default=1, type=int, help='')
     parser.add_argument('--tau',
-                        default=0.001,
+                        default=0.005,
                         type=float,
                         help='moving average for target network')
     parser.add_argument('--ou_theta',
@@ -101,7 +101,7 @@ def train(agent: DDPG, env, evaluate, args, debug=True):
     while step < args.train_iter:
         # reset if it is the start of episode
         if observation is None:
-            observation = deepcopy(env.reset())
+            observation = env.reset()
             agent.reset(observation)
 
         # agent pick action ...

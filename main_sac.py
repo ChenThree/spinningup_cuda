@@ -43,7 +43,7 @@ def args_parser():
                         type=int,
                         help='minibatch size')
     parser.add_argument('--memory-size',
-                        default=5000000,
+                        default=1000000,
                         type=int,
                         help='memory size')
     parser.add_argument('--window_length', default=1, type=int, help='')

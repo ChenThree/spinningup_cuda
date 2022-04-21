@@ -2,9 +2,11 @@ python main_ddpg.py \
 --env DKittyStandRandom-v0 \
 --output ./checkpoint/ddpg1 \
 --batch-size 1024 \
+--tau 0.005 \
 --rate 0.001 \
---prate 0.0001 \
+--prate 0.001 \
+--warmup 10000 \
 --validate_episodes 100 \
 --validate_steps 10000 \
---epsilon_decay 200000 \
---train_iter 500000
+--epsilon_decay 400000 \
+--train_iter 1000000
