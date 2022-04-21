@@ -41,7 +41,7 @@ class Evaluator(object):
                 if self.max_episode_length and episode_steps >= self.max_episode_length - 1:
                     done = True
 
-                if visualize and episode == 0:
+                if visualize:
                     env.render(mode='human')
 
                 # update

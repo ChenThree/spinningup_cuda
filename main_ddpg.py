@@ -8,8 +8,8 @@ import numpy as np
 import robel
 import torch
 
-from ddpg_utils import DDPG
-from evaluator import Evaluator
+from ddpg_utils.DDPG import DDPG
+from ddpg_utils.evaluator import Evaluator
 
 os.environ['CUDA_VISIBLE_DEVICES'] = '0'
 torch.backends.cudnn.enabled = True

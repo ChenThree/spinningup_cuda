@@ -6,10 +6,10 @@ import torch.nn as nn
 from torch import optim
 from torch.autograd import Variable
 
-from memory import SequentialMemory
-from random_process import OrnsteinUhlenbeckProcess
+from .memory import SequentialMemory
+from .random_process import OrnsteinUhlenbeckProcess
 
-network_size = 512
+network_size = 256
 factor = 4
 
 
@@ -229,19 +229,21 @@ class DDPG(object):
         self.s_t = obs
         self.random_process.reset_states()
 
-    def load_weights(self, output):
+    def load_weights(self, output, iter):
         if output is None:
             return
 
-        self.actor.load_state_dict(torch.load('{}/actor.pkl'.format(output)))
+        self.actor.load_state_dict(
+            torch.load('{}/actor_{}.pth'.format(output, iter)))
 
-        self.critic.load_state_dict(torch.load('{}/critic.pkl'.format(output)))
+        self.critic.load_state_dict(
+            torch.load('{}/critic_{}.pth'.format(output, iter)))
 
     def save_model(self, output, iter):
         torch.save(self.actor.state_dict(),
-                   '{}/actor_{}.pkl'.format(output, iter))
+                   '{}/actor_{}.pth'.format(output, iter))
         torch.save(self.critic.state_dict(),
-                   '{}/critic_{}.pkl'.format(output, iter))
+                   '{}/critic_{}.pth'.format(output, iter))
 
     def seed(self, s):
         torch.manual_seed(s)
