@@ -18,11 +18,11 @@ class Actor(nn.Module):
     def __init__(self, num_states, num_actions):
         super().__init__()
         self.mlp = nn.Sequential(nn.Linear(num_states, network_size),
-                                 nn.LayerNorm(network_size), nn.GELU(),
+                                 nn.LayerNorm(network_size), nn.SiLU(),
                                  nn.Linear(network_size, network_size * factor),
-                                 nn.LayerNorm(network_size * factor), nn.GELU(),
+                                 nn.LayerNorm(network_size * factor), nn.SiLU(),
                                  nn.Linear(network_size * factor, network_size),
-                                 nn.LayerNorm(network_size), nn.GELU(),
+                                 nn.LayerNorm(network_size), nn.SiLU(),
                                  nn.Linear(network_size, num_actions),
                                  nn.Tanh())
         self.init_weights()
@@ -51,11 +51,11 @@ class Critic(nn.Module):
         super().__init__()
         self.mlp = nn.Sequential(
             nn.Linear(num_states + num_actions, network_size),
-            nn.LayerNorm(network_size), nn.GELU(),
+            nn.LayerNorm(network_size), nn.SiLU(),
             nn.Linear(network_size, network_size * factor),
-            nn.LayerNorm(network_size * factor), nn.GELU(),
+            nn.LayerNorm(network_size * factor), nn.SiLU(),
             nn.Linear(network_size * factor, network_size),
-            nn.LayerNorm(network_size), nn.GELU(), nn.Linear(network_size, 1))
+            nn.LayerNorm(network_size), nn.SiLU(), nn.Linear(network_size, 1))
         self.init_weights()
 
     def init_weights(self):
@@ -148,7 +148,7 @@ class DDPG(object):
         ])
 
         target_q_batch = to_tensor(reward_batch) + \
-            self.discount*to_tensor(terminal_batch.astype(np.float))*next_q_values
+            self.discount*to_tensor(terminal_batch.astype(np.float64))*next_q_values
 
         # Critic update
         self.critic.zero_grad()

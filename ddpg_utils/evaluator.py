@@ -1,3 +1,5 @@
+import os.path as osp
+
 import matplotlib.pyplot as plt
 import numpy as np
 from scipy.io import savemat
@@ -15,12 +17,14 @@ class Evaluator(object):
         self.interval = interval
         self.save_path = save_path
         self.results = np.array([]).reshape(num_episodes, 0)
+        self.success = []
 
     def __call__(self, env, policy, debug=False, visualize=False, save=True):
 
         self.is_training = False
         observation = None
         result = []
+        success = 0
 
         for episode in range(self.num_episodes):
 
@@ -48,6 +52,8 @@ class Evaluator(object):
                 episode_reward += reward
                 episode_steps += 1
 
+            success += int(info['score/success'])
+
             if debug:
                 print('[Evaluate] #Episode{}: episode_reward:{}'.format(
                     episode, episode_reward))
@@ -55,9 +61,10 @@ class Evaluator(object):
 
         result = np.array(result).reshape(-1, 1)
         self.results = np.hstack([self.results, result])
-
+        self.success.append(success / self.num_episodes)
+        print('validate success rate ==', success / self.num_episodes)
         if save:
-            self.save_results('{}/validate_reward'.format(self.save_path))
+            self.save_results(self.save_path)
         return np.mean(result)
 
     def save_results(self, fn):
@@ -66,9 +73,18 @@ class Evaluator(object):
         error = np.std(self.results, axis=0)
 
         x = range(0, self.results.shape[1] * self.interval, self.interval)
-        fig, ax = plt.subplots(1, 1, figsize=(6, 5))
+        # reward
+        plt.figure(figsize=(10, 5))
         plt.xlabel('Timestep')
         plt.ylabel('Average Reward')
-        ax.errorbar(x, y, yerr=error, fmt='-o')
-        plt.savefig(fn + '.png')
-        savemat(fn + '.mat', {'reward': self.results})
+        plt.errorbar(x, y, yerr=error, fmt='-o')
+        plt.savefig(osp.join(fn, 'reward.png'))
+        savemat(osp.join(fn, 'reward.mat'), {'reward': self.results})
+        # success rate
+        plt.figure(figsize=(10, 5))
+        plt.xlabel('Timestep')
+        plt.ylabel('Average Success Rate')
+        plt.plot(x, self.success)
+        plt.savefig(osp.join(fn, 'success_rate.png'))
+        savemat(osp.join(fn, 'success_rate.mat'),
+                {'success_rate': self.success})

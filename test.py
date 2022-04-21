@@ -2,7 +2,7 @@ import gym
 import numpy as np
 import robel
 
-env_name = 'DKittyWalkRandom-v0'
+env_name = 'DKittyStandRandom-v0'
 
 
 def main():
@@ -16,10 +16,12 @@ def main():
     print(env.action_space.high, env.action_space.low)
     print(env.observation_space.high, env.observation_space.low)
     for i in range(1000):
-        env.render()
+        # env.render()
         observation, reward, done, info = env.step(env.action_space.sample())
-        # print(i, reward, done)
-        # print(info)
+        if done:
+            print(i, reward, done)
+            print(info['score/success'])
+            break
 
     env.close()
 
