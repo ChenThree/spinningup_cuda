@@ -6,6 +6,7 @@ python main_ddpg.py \
 --rate 0.001 \
 --prate 0.001 \
 --warmup 10000 \
+--memory-size 2000000 \
 --validate_episodes 100 \
 --validate_steps 10000 \
 --epsilon_decay 500000 \

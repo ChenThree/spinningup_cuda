@@ -13,7 +13,27 @@ network_size = 256
 factor = 4
 
 
-class Actor(nn.Module):
+class BaseModule(nn.Module):
+
+    def __init__(self) -> None:
+        super().__init__()
+
+    def init_weights(self):
+        # init
+        for m in self.modules():
+            if isinstance(m, nn.Conv2d):
+                n = m.kernel_size[0] * m.kernel_size[1] * m.out_channels
+                m.weight.data.normal_(0, math.sqrt(2. / n))
+            elif isinstance(m, (nn.LayerNorm, nn.BatchNorm1d, nn.BatchNorm2d)):
+                nn.init.constant_(m.weight, 1)
+                nn.init.constant_(m.bias, 0)
+            elif isinstance(m, nn.Linear):
+                nn.init.xavier_normal_(m.weight)
+                if m.bias is not None:
+                    nn.init.constant_(m.bias, 0)
+
+
+class Actor(BaseModule):
 
     def __init__(self, num_states, num_actions):
         super().__init__()
@@ -27,25 +47,11 @@ class Actor(nn.Module):
                                  nn.Tanh())
         self.init_weights()
 
-    def init_weights(self):
-        # init
-        for m in self.modules():
-            if isinstance(m, nn.Conv2d):
-                n = m.kernel_size[0] * m.kernel_size[1] * m.out_channels
-                m.weight.data.normal_(0, math.sqrt(2. / n))
-            elif isinstance(m, nn.BatchNorm2d):
-                nn.init.constant_(m.weight, 1)
-                nn.init.constant_(m.bias, 0)
-            elif isinstance(m, nn.Linear):
-                nn.init.xavier_normal_(m.weight)
-                if m.bias is not None:
-                    nn.init.constant_(m.bias, 0)
-
     def forward(self, x):
         return self.mlp(x)
 
 
-class Critic(nn.Module):
+class Critic(BaseModule):
 
     def __init__(self, num_states, num_actions):
         super().__init__()
@@ -57,20 +63,6 @@ class Critic(nn.Module):
             nn.Linear(network_size * factor, network_size),
             nn.LayerNorm(network_size), nn.SiLU(), nn.Linear(network_size, 1))
         self.init_weights()
-
-    def init_weights(self):
-        # init
-        for m in self.modules():
-            if isinstance(m, nn.Conv2d):
-                n = m.kernel_size[0] * m.kernel_size[1] * m.out_channels
-                m.weight.data.normal_(0, math.sqrt(2. / n))
-            elif isinstance(m, nn.BatchNorm2d):
-                nn.init.constant_(m.weight, 1)
-                nn.init.constant_(m.bias, 0)
-            elif isinstance(m, nn.Linear):
-                nn.init.xavier_normal_(m.weight)
-                if m.bias is not None:
-                    nn.init.constant_(m.bias, 0)
 
     def forward(self, xs):
         return self.mlp(torch.cat(xs, 1))
@@ -87,12 +79,7 @@ def soft_update(target, source, tau):
                                 param.data * tau)
 
 
-def hard_update(target, source):
-    for target_param, param in zip(target.parameters(), source.parameters()):
-        target_param.data.copy_(param.data)
-
-
-class DDPG(object):
+class DDPG():
 
     def __init__(self, num_states, num_actions, args):
 
@@ -111,9 +98,9 @@ class DDPG(object):
         self.critic_target = Critic(self.num_states, self.num_actions)
         self.critic_optim = optim.Adam(self.critic.parameters(), lr=args.rate)
 
-        hard_update(self.actor_target,
-                    self.actor)  # Make sure target is with the same weight
-        hard_update(self.critic_target, self.critic)
+        # Make sure target is with the same weight
+        soft_update(self.actor_target, self.actor, 1)
+        soft_update(self.critic_target, self.critic, 1)
 
         # Create replay buffer
         self.memory = SequentialMemory(limit=args.memory_size,

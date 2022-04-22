@@ -15,13 +15,13 @@ def main():
     print(num_states, num_actions)
     print(env.action_space.high, env.action_space.low)
     print(env.observation_space.high, env.observation_space.low)
-    for i in range(1000):
-        env.render()
+    for i in range(10000):
+        # env.render()
         observation, reward, done, info = env.step(env.action_space.sample())
-        if done:
-            print(i, reward, done)
-            print(info['score/success'])
-            break
+        # if done:
+        #     print(i, reward, done)
+        #     print(info['score/success'])
+        #     break
 
     env.close()
 

@@ -58,9 +58,6 @@ class RingBuffer(object):
         elif self.length == self.maxlen:
             # No space, "remove" the first item.
             self.start = (self.start + 1) % self.maxlen
-        else:
-            # This should never happen.
-            raise RuntimeError()
         self.data[(self.start + self.length - 1) % self.maxlen] = v
 
 

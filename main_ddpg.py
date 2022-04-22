@@ -100,6 +100,7 @@ def train(agent: DDPG, env, evaluate, args, debug=True):
     observation = None
     while step < args.train_iter:
         # reset if it is the start of episode
+
         if observation is None:
             observation = env.reset()
             agent.reset(observation)
@@ -178,34 +179,21 @@ def test(agent: DDPG, env, evaluate, args, visualize=True, debug=True):
         print(validate_reward)
 
 
-class NormalizedEnv(gym.ActionWrapper):
-    """ Wrap action """
-
-    def action(self, action):
-        act_k = (self.action_space.high - self.action_space.low) / 2.
-        act_b = (self.action_space.high + self.action_space.low) / 2.
-        return act_k * action + act_b
-
-    def reverse_action(self, action):
-        act_k_inv = 2. / (self.action_space.high - self.action_space.low)
-        act_b = (self.action_space.high + self.action_space.low) / 2.
-        return act_k_inv * (action - act_b)
-
-
 def main():
     # read args
     args = args_parser()
     # prepare sim env
     # action: 12 * [-1, 1] observation: 61 * [-inf, inf]
-    env = NormalizedEnv(gym.make(args.env))
+    env = gym.make(args.env)
     env.reset()
     num_states = env.observation_space.shape[0]
     num_actions = env.action_space.shape[0]
     # set random seed
     np.random.seed(args.seed)
     env.seed(args.seed)
-
     agent = DDPG(num_states, num_actions, args)
+    time.sleep(10)
+    return
     evaluate = Evaluator(args.validate_episodes,
                          args.validate_steps,
                          args.output,
