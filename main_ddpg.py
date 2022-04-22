@@ -92,7 +92,7 @@ def args_parser():
     return parser.parse_args()
 
 
-def train(agent: DDPG, env, evaluate, args, debug=True):
+def train(agent: DDPG, env, evaluate, args, debug=False):
     last_time = time.time()
     agent.is_training = True
     step = episode = episode_steps = 0
@@ -192,8 +192,6 @@ def main():
     np.random.seed(args.seed)
     env.seed(args.seed)
     agent = DDPG(num_states, num_actions, args)
-    time.sleep(10)
-    return
     evaluate = Evaluator(args.validate_episodes,
                          args.validate_steps,
                          args.output,

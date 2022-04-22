@@ -1,4 +1,5 @@
 import os.path as osp
+import time
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -40,7 +41,7 @@ class Evaluator(object):
             while not done:
                 # basic operation, action ,reward, blablabla ...
                 action = policy(observation)
-
+                # avoid mujoco error
                 observation, reward, done, info = env.step(action)
                 if self.max_episode_length and episode_steps >= self.max_episode_length - 1:
                     done = True
