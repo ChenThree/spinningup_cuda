@@ -79,6 +79,7 @@ class Evaluator(object):
         plt.ylabel('Average Reward')
         plt.errorbar(x, y, yerr=error, fmt='-o')
         plt.savefig(osp.join(fn, 'reward.png'))
+        plt.close()
         savemat(osp.join(fn, 'reward.mat'), {'reward': self.results})
         # success rate
         plt.figure(figsize=(10, 5))
@@ -86,5 +87,6 @@ class Evaluator(object):
         plt.ylabel('Average Success Rate')
         plt.plot(x, self.success)
         plt.savefig(osp.join(fn, 'success_rate.png'))
+        plt.close()
         savemat(osp.join(fn, 'success_rate.mat'),
                 {'success_rate': self.success})

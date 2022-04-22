@@ -5,8 +5,8 @@ python main_ddpg.py \
 --tau 0.005 \
 --rate 0.001 \
 --prate 0.001 \
---warmup 20000 \
+--warmup 50000 \
 --validate_episodes 100 \
---validate_steps 20000 \
---epsilon_decay 800000 \
---train_iter 2000000
+--validate_steps 50000 \
+--epsilon_decay 2000000 \
+--train_iter 5000000
