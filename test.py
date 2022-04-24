@@ -16,7 +16,7 @@ def main():
     print(env.action_space.high, env.action_space.low)
     print(env.observation_space.high, env.observation_space.low)
     for i in range(10000):
-        # env.render()
+        env.render()
         observation, reward, done, info = env.step(env.action_space.sample())
         # if done:
         #     print(i, reward, done)
