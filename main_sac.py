@@ -59,7 +59,7 @@ def args_parser():
                         type=int,
                         help='train iters each timestep')
     parser.add_argument(
-        '--update-after',
+        '--warmup',
         default=5000,
         type=int,
         help=
@@ -111,8 +111,8 @@ def main():
                 lr=args.lr,
                 alpha=args.alpha,
                 batch_size=args.batch_size,
-                start_steps=args.random_steps,
-                update_after=args.update_after,
+                random_steps=args.random_steps,
+                warmup=args.warmup,
                 update_every=args.update_every,
                 num_test_episodes=args.validate_episodes,
                 max_ep_len=args.max_episode_length,
