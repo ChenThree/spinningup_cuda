@@ -91,23 +91,22 @@ def main():
         return gym.make(args.env)
 
     # ddpg
-    ddpg_pytorch(
-        env_fn,
-        steps_per_epoch=args.steps_per_epoch,
-        epochs=args.epochs,
-        seed=args.seed,
-        replay_size=args.replay_size,
-        gamma=args.gamma,
-        polyak=args.polyak,
-        pi_lr=args.plr,
-        q_lr=args.qlr,
-        act_noise=args.noise,
-        batch_size=args.batch_size,
-        start_steps=args.random_steps,
-        update_after=args.warmup,
-        num_test_episodes=args.validate_episodes,
-        max_ep_len=args.max_episode_length,
-    )
+    ddpg_pytorch(env_fn,
+                 steps_per_epoch=args.steps_per_epoch,
+                 epochs=args.epochs,
+                 seed=args.seed,
+                 replay_size=args.replay_size,
+                 gamma=args.gamma,
+                 polyak=args.polyak,
+                 pi_lr=args.plr,
+                 q_lr=args.qlr,
+                 act_noise=args.noise,
+                 batch_size=args.batch_size,
+                 start_steps=args.random_steps,
+                 update_after=args.warmup,
+                 num_test_episodes=args.validate_episodes,
+                 max_ep_len=args.max_episode_length,
+                 logger_kwargs={'output_dir': '.logs'})
 
 
 if __name__ == '__main__':
