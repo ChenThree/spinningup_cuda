@@ -2,7 +2,7 @@
 
 Some simple logging functionality, inspired by rllab's logging.
 
-Logs to a tab-separated-values file (path/to/output_directory/progress.txt)
+Logs to a tab-separated-values file (path/to/output_directory/progress.csv)
 
 """
 import atexit
@@ -55,7 +55,7 @@ class Logger:
 
     def __init__(self,
                  output_dir=None,
-                 output_fname='progress.txt',
+                 output_fname='progress.csv',
                  exp_name=None):
         """
         Initialize a Logger.
@@ -67,7 +67,7 @@ class Logger:
 
             output_fname (string): Name for the tab-separated-value file
                 containing metrics logged throughout a training run.
-                Defaults to ``progress.txt``.
+                Defaults to ``progress.csv``.
 
             exp_name (string): Experiment name. If you run multiple training
                 runs and give them all the same ``exp_name``, the plotter
@@ -176,8 +176,6 @@ class Logger:
                 joblib.dump(state_dict, osp.join(self.output_dir, fname))
             except:
                 self.log('Warning: could not pickle state_dict.', color='red')
-            if hasattr(self, 'tf_saver_elements'):
-                self._tf_simple_save(itr)
             if hasattr(self, 'pytorch_saver_elements'):
                 self._pytorch_simple_save(itr)
 
@@ -237,14 +235,14 @@ class Logger:
             print("-" * n_slashes)
             for key in self.log_headers:
                 val = self.log_current_row.get(key, "")
-                valstr = "%8.3g" % val if hasattr(val, "__float__") else val
+                valstr = "%8.3f" % val if hasattr(val, "__float__") else val
                 print(fmt % (key, valstr))
                 vals.append(val)
             print("-" * n_slashes, flush=True)
             if self.output_file is not None:
                 if self.first_row:
-                    self.output_file.write("\t".join(self.log_headers) + "\n")
-                self.output_file.write("\t".join(map(str, vals)) + "\n")
+                    self.output_file.write(",".join(self.log_headers) + "\n")
+                self.output_file.write(",".join(map(str, vals)) + "\n")
                 self.output_file.flush()
         self.log_current_row.clear()
         self.first_row = False

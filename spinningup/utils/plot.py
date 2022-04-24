@@ -37,16 +37,10 @@ def plot_data(data,
     if isinstance(data, list):
         data = pd.concat(data, ignore_index=True)
     sns.set(style="darkgrid", font_scale=1.5)
-    sns.tsplot(data=data,
-               time=xaxis,
-               value=value,
-               unit="Unit",
-               condition=condition,
-               ci='sd',
-               **kwargs)
+    sns.lineplot(data=data, x=xaxis, y=value, hue=condition, ci='sd', **kwargs)
     """
     If you upgrade to any version of Seaborn greater than 0.8.1, switch from
-    tsplot to lineplot replacing L29 with:
+    lineplot to lineplot replacing L29 with:
 
         sns.lineplot(data=data, x=xaxis, y=value, hue=condition, ci='sd', **kwargs)
 
@@ -76,13 +70,13 @@ def get_datasets(logdir, condition=None):
     Recursively look through logdir for output files produced by
     spinup.logx.Logger.
 
-    Assumes that any file "progress.txt" is a valid hit.
+    Assumes that any file "progress.csv" is a valid hit.
     """
     global exp_idx
     global units
     datasets = []
     for root, _, files in os.walk(logdir):
-        if 'progress.txt' in files:
+        if 'progress.csv' in files:
             exp_name = None
             try:
                 config_path = open(os.path.join(root, 'config.json'))
@@ -100,10 +94,11 @@ def get_datasets(logdir, condition=None):
             units[condition1] += 1
 
             try:
-                exp_data = pd.read_table(os.path.join(root, 'progress.txt'))
+                exp_data = pd.read_table(os.path.join(root, 'progress.csv'),
+                                         delimiter=',')
             except:
                 print('Could not read from %s' %
-                      os.path.join(root, 'progress.txt'))
+                      os.path.join(root, 'progress.csv'))
                 continue
             performance = 'AverageTestEpRet' if 'AverageTestEpRet' in exp_data else 'AverageEpRet'
             exp_data.insert(len(exp_data.columns), 'Unit', unit)

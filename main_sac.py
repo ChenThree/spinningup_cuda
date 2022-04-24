@@ -37,7 +37,7 @@ def args_parser():
                         help='entropy regularization coefficient')
     parser.add_argument('--gamma', default=0.99, type=float, help='')
     parser.add_argument('--batch-size',
-                        default=512,
+                        default=1024,
                         type=int,
                         help='minibatch size')
     parser.add_argument('--replay-size',

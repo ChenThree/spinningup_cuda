@@ -255,9 +255,11 @@ def ddpg(env_fn,
             o, d, ep_ret, ep_len = test_env.reset(), False, 0, 0
             while not (d or (ep_len == max_ep_len)):
                 # Take deterministic actions at test time (noise_scale=0)
-                o, r, d, _ = test_env.step(get_action(o, 0))
+                o, r, d, info = test_env.step(get_action(o, 0))
                 ep_ret += r
                 ep_len += 1
+            # success rate
+            logger.store(TestSuccess=int(info['score/success']))
             logger.store(TestEpRet=ep_ret, TestEpLen=ep_len)
 
     # Prepare for interaction with environment
@@ -277,7 +279,7 @@ def ddpg(env_fn,
             a = env.action_space.sample()
 
         # Step the env
-        o2, r, d, _ = env.step(a)
+        o2, r, d, info = env.step(a)
         ep_ret += r
         ep_len += 1
 
@@ -296,6 +298,8 @@ def ddpg(env_fn,
         # End of trajectory handling
         if d or (ep_len == max_ep_len):
             logger.store(EpRet=ep_ret, EpLen=ep_len)
+            # success rate for robel
+            logger.store(Success=int(info['score/success']))
             o, ep_ret, ep_len = env.reset(), 0, 0
 
         # Update handling
@@ -317,6 +321,7 @@ def ddpg(env_fn,
 
             # Log info about epoch
             logger.log_tabular('Epoch', epoch)
+            logger.log_tabular('Success', average_only=True)
             logger.log_tabular('EpRet', with_min_and_max=True)
             logger.log_tabular('TestEpRet', with_min_and_max=True)
             logger.log_tabular('EpLen', average_only=True)

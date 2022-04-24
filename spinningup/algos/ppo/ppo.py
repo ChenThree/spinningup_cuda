@@ -325,7 +325,7 @@ def ppo(env_fn,
         for t in range(local_steps_per_epoch):
             a, v, logp = ac.step(torch.as_tensor(o, dtype=torch.float32).cuda())
 
-            next_o, r, d, _ = env.step(a)
+            next_o, r, d, info = env.step(a)
             ep_ret += r
             ep_len += 1
 
@@ -355,6 +355,7 @@ def ppo(env_fn,
                 if terminal:
                     # only save EpRet / EpLen if trajectory finished
                     logger.store(EpRet=ep_ret, EpLen=ep_len)
+                    logger.store(TestSuccess=int(info['score/success']))
                 o, ep_ret, ep_len = env.reset(), 0, 0
 
         # Save model
@@ -398,7 +399,7 @@ if __name__ == '__main__':
 
     mpi_fork(args.cpu)  # run parallel code with mpi
 
-    from spinup.utils.run_utils import setup_logger_kwargs
+    from ...utils.run_utils import setup_logger_kwargs
     logger_kwargs = setup_logger_kwargs(args.exp_name, args.seed)
 
     ppo(lambda: gym.make(args.env),

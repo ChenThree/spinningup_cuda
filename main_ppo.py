@@ -10,6 +10,7 @@ import torch
 import torch.nn as nn
 
 from spinningup import ppo_pytorch
+from spinningup.utils.mpi_tools import mpi_fork
 
 os.environ['CUDA_VISIBLE_DEVICES'] = '0'
 torch.backends.cudnn.enabled = True
@@ -18,6 +19,7 @@ torch.backends.cudnn.benchmark = False
 
 def args_parser():
     parser = argparse.ArgumentParser(description='DDPG DKiity')
+    parser.add_argument('--cpu', type=int, default=1)
     parser.add_argument('--env',
                         default='DKittyStandRandom-v0',
                         type=str,
@@ -65,6 +67,8 @@ def main():
     def env_fn():
         return gym.make(args.env)
 
+    # run parallel code with mpi
+    mpi_fork(args.cpu)
     # ppo
     ppo_pytorch(env_fn,
                 ac_kwargs={
