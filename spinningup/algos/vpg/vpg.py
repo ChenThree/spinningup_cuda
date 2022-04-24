@@ -266,6 +266,12 @@ def vpg(env_fn,
         loss_pi, pi_info = compute_loss_pi(data)
         loss_pi.backward()
         mpi_avg_grads(ac.pi)  # average grads across MPI processes
+
+        # clamp grad
+        for param in ac.pi.parameters():
+            if param.grad is not None:
+                param.grad.data.clamp_(-1, 1)
+
         pi_optimizer.step()
 
         # Value function learning
@@ -274,6 +280,12 @@ def vpg(env_fn,
             loss_v = compute_loss_v(data)
             loss_v.backward()
             mpi_avg_grads(ac.v)  # average grads across MPI processes
+
+            # clamp grad
+            for param in ac.v.parameters():
+                if param.grad is not None:
+                    param.grad.data.clamp_(-1, 1)
+
             vf_optimizer.step()
 
         # Log changes from update
@@ -305,9 +317,9 @@ def vpg(env_fn,
             # Update obs (critical!)
             o = next_o
 
-            timeout = ep_len == max_ep_len
-            terminal = d or timeout
-            epoch_ended = t == local_steps_per_epoch - 1
+            timeout = (ep_len == max_ep_len)
+            terminal = (d or timeout)
+            epoch_ended = (t == local_steps_per_epoch - 1)
 
             if terminal or epoch_ended:
                 if epoch_ended and not (terminal):
@@ -365,7 +377,7 @@ if __name__ == '__main__':
 
     mpi_fork(args.cpu)  # run parallel code with mpi
 
-    from spinup.utils.run_utils import setup_logger_kwargs
+    from ...utils.run_utils import setup_logger_kwargs
     logger_kwargs = setup_logger_kwargs(args.exp_name, args.seed)
 
     vpg(lambda: gym.make(args.env),
