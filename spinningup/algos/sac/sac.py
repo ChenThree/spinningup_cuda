@@ -214,7 +214,7 @@ def sac(env_fn,
             q1_pi_targ = ac_targ.q1(o2, a2)
             q2_pi_targ = ac_targ.q2(o2, a2)
             q_pi_targ = torch.min(q1_pi_targ, q2_pi_targ)
-            backup = r + gamma * (1 - d) * (q_pi_targ - alpha * logp_a2)
+            backup = r + gamma * d * (q_pi_targ - alpha * logp_a2)
 
         # MSE loss against Bellman backup
         loss_q1 = ((q1 - backup)**2).mean()
@@ -268,7 +268,17 @@ def sac(env_fn,
         # Next run one gradient descent step for pi.
         pi_optimizer.zero_grad()
         loss_pi, pi_info = compute_loss_pi(data)
+        # clamp grad
+        for param in ac.pi.parameters():
+            if param.grad is not None:
+                param.grad.data.clamp_(-1, 1)
+
         loss_pi.backward()
+        # clamp grad
+        for param in q_params:
+            if param.grad is not None:
+                param.grad.data.clamp_(-1, 1)
+
         pi_optimizer.step()
 
         # Unfreeze Q-networks so you can optimize it at next DDPG step.
@@ -291,16 +301,19 @@ def sac(env_fn,
             torch.as_tensor(o, dtype=torch.float32).cuda(), deterministic)
 
     def test_agent():
-        for j in range(num_test_episodes):
-            o, d, ep_ret, ep_len = test_env.reset(), False, 0, 0
-            while not (d or (ep_len == max_ep_len)):
-                # Take deterministic actions at test time
-                o, r, d, _ = test_env.step(get_action(o, True))
-                ep_ret += r
-                ep_len += 1
-            # success rate for robel
-            logger.store(TestSuccess=int(info['score/success']))
-            logger.store(TestEpRet=ep_ret, TestEpLen=ep_len)
+        ac.eval()
+        with torch.no_grad():
+            for j in range(num_test_episodes):
+                o, d, ep_ret, ep_len = test_env.reset(), False, 0, 0
+                while not (d or (ep_len == max_ep_len)):
+                    # Take deterministic actions at test time
+                    o, r, d, _ = test_env.step(get_action(o, True))
+                    ep_ret += r
+                    ep_len += 1
+                # success rate for robel
+                logger.store(TestSuccess=int(info['score/success']))
+                logger.store(TestEpRet=ep_ret, TestEpLen=ep_len)
+        ac.train()
 
     # Prepare for interaction with environment
     total_steps = steps_per_epoch * epochs

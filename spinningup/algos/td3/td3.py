@@ -224,7 +224,7 @@ def td3(env_fn,
             q1_pi_targ = ac_targ.q1(o2, a2)
             q2_pi_targ = ac_targ.q2(o2, a2)
             q_pi_targ = torch.min(q1_pi_targ, q2_pi_targ)
-            backup = r + gamma * (1 - d) * q_pi_targ
+            backup = r + gamma * d * q_pi_targ
 
         # MSE loss against Bellman backup
         loss_q1 = ((q1 - backup)**2).mean()
@@ -255,6 +255,11 @@ def td3(env_fn,
         q_optimizer.zero_grad()
         loss_q, loss_info = compute_loss_q(data)
         loss_q.backward()
+        # clamp grad
+        for param in q_params:
+            if param.grad is not None:
+                param.grad.data.clamp_(-1, 1)
+
         q_optimizer.step()
 
         # Record things
@@ -272,6 +277,11 @@ def td3(env_fn,
             pi_optimizer.zero_grad()
             loss_pi = compute_loss_pi(data)
             loss_pi.backward()
+            # clamp grad
+            for param in ac.pi.parameters():
+                if param.grad is not None:
+                    param.grad.data.clamp_(-1, 1)
+
             pi_optimizer.step()
 
             # Unfreeze Q-networks so you can optimize it at next DDPG step.
@@ -295,16 +305,19 @@ def td3(env_fn,
         return np.clip(a, -act_limit, act_limit)
 
     def test_agent():
-        for j in range(num_test_episodes):
-            o, d, ep_ret, ep_len = test_env.reset(), False, 0, 0
-            while not (d or (ep_len == max_ep_len)):
-                # Take deterministic actions at test time (noise_scale=0)
-                o, r, d, info = test_env.step(get_action(o, 0))
-                ep_ret += r
-                ep_len += 1
-            # success rate for robel
-            logger.store(TestSuccess=int(info['score/success']))
-            logger.store(TestEpRet=ep_ret, TestEpLen=ep_len)
+        ac.eval()
+        with torch.no_grad():
+            for j in range(num_test_episodes):
+                o, d, ep_ret, ep_len = test_env.reset(), False, 0, 0
+                while not (d or (ep_len == max_ep_len)):
+                    # Take deterministic actions at test time (noise_scale=0)
+                    o, r, d, info = test_env.step(get_action(o, 0))
+                    ep_ret += r
+                    ep_len += 1
+                # success rate for robel
+                logger.store(TestSuccess=int(info['score/success']))
+                logger.store(TestEpRet=ep_ret, TestEpLen=ep_len)
+        ac.train()
 
     # Prepare for interaction with environment
     total_steps = steps_per_epoch * epochs

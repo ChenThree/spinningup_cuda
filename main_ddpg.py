@@ -76,10 +76,13 @@ def args_parser():
                         default=10000,
                         type=int,
                         help='train iters each timestep')
-    parser.add_argument('--random-steps',
-                        default=100000,
-                        type=int,
-                        help='linear decay of exploration policy')
+    parser.add_argument(
+        '--random-steps',
+        default=100000,
+        type=int,
+        help=
+        'Number of steps for uniform-random action selection, before running real policy'
+    )
     parser.add_argument('--noise', default=0.1, type=float, help='train noise')
     parser.add_argument('--resume',
                         default=None,

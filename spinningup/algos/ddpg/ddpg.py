@@ -189,7 +189,7 @@ def ddpg(env_fn,
         # Bellman backup for Q function
         with torch.no_grad():
             q_pi_targ = ac_targ.q(o2, ac_targ.pi(o2))
-            backup = r + gamma * (1 - d) * q_pi_targ
+            backup = r + gamma * d * q_pi_targ
 
         # MSE loss against Bellman backup
         loss_q = ((q - backup)**2).mean()
@@ -217,6 +217,12 @@ def ddpg(env_fn,
         q_optimizer.zero_grad()
         loss_q, loss_info = compute_loss_q(data)
         loss_q.backward()
+
+        # clamp grad
+        for param in ac.q.parameters():
+            if param.grad is not None:
+                param.grad.data.clamp_(-1, 1)
+
         q_optimizer.step()
 
         # Freeze Q-network so you don't waste computational effort
@@ -228,6 +234,12 @@ def ddpg(env_fn,
         pi_optimizer.zero_grad()
         loss_pi = compute_loss_pi(data)
         loss_pi.backward()
+
+        # clamp grad
+        for param in ac.pi.parameters():
+            if param.grad is not None:
+                param.grad.data.clamp_(-1, 1)
+
         pi_optimizer.step()
 
         # Unfreeze Q-network so you can optimize it at next DDPG step.
@@ -251,16 +263,19 @@ def ddpg(env_fn,
         return np.clip(a, -act_limit, act_limit)
 
     def test_agent():
-        for j in range(num_test_episodes):
-            o, d, ep_ret, ep_len = test_env.reset(), False, 0, 0
-            while not (d or (ep_len == max_ep_len)):
-                # Take deterministic actions at test time (noise_scale=0)
-                o, r, d, info = test_env.step(get_action(o, 0))
-                ep_ret += r
-                ep_len += 1
-            # success rate
-            logger.store(TestSuccess=int(info['score/success']))
-            logger.store(TestEpRet=ep_ret, TestEpLen=ep_len)
+        ac.eval()
+        with torch.no_grad():
+            for j in range(num_test_episodes):
+                o, d, ep_ret, ep_len = test_env.reset(), False, 0, 0
+                while not (d or (ep_len == max_ep_len)):
+                    # Take deterministic actions at test time (noise_scale=0)
+                    o, r, d, info = test_env.step(get_action(o, 0))
+                    ep_ret += r
+                    ep_len += 1
+                # success rate
+                # logger.store(TestSuccess=int(info['score/success']))
+                logger.store(TestEpRet=ep_ret, TestEpLen=ep_len)
+        ac.train()
 
     # Prepare for interaction with environment
     total_steps = steps_per_epoch * epochs
@@ -299,7 +314,7 @@ def ddpg(env_fn,
         if d or (ep_len == max_ep_len):
             logger.store(EpRet=ep_ret, EpLen=ep_len)
             # success rate for robel
-            logger.store(Success=int(info['score/success']))
+            # logger.store(Success=int(info['score/success']))
             o, ep_ret, ep_len = env.reset(), 0, 0
 
         # Update handling
@@ -321,9 +336,9 @@ def ddpg(env_fn,
 
             # Log info about epoch
             logger.log_tabular('Epoch', epoch)
-            logger.log_tabular('Success', average_only=True)
+            # logger.log_tabular('Success', average_only=True)
             logger.log_tabular('EpRet', with_min_and_max=True)
-            logger.log_tabular('TestSuccess', average_only=True)
+            # logger.log_tabular('TestSuccess', average_only=True)
             logger.log_tabular('TestEpRet', with_min_and_max=True)
             logger.log_tabular('EpLen', average_only=True)
             logger.log_tabular('TestEpLen', average_only=True)
