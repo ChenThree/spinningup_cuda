@@ -106,7 +106,7 @@ def main():
                  update_after=args.warmup,
                  num_test_episodes=args.validate_episodes,
                  max_ep_len=args.max_episode_length,
-                 logger_kwargs={'output_dir': '.logs-ddpg'})
+                 logger_kwargs={'output_dir': './logs-ddpg'})
 
 
 if __name__ == '__main__':

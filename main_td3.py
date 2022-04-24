@@ -8,7 +8,7 @@ import numpy as np
 import robel
 import torch
 
-from spinningup import sac_pytorch
+from spinningup import td3_pytorch
 
 os.environ['CUDA_VISIBLE_DEVICES'] = '0'
 torch.backends.cudnn.enabled = True
@@ -26,11 +26,14 @@ def args_parser():
                         type=str,
                         help='support option: train/test')
     parser.add_argument('--seed', default=2, type=int, help='random seed')
-    parser.add_argument('--lr', default=0.001, type=float, help='learning rate')
-    parser.add_argument('--alpha',
-                        default=0.2,
+    parser.add_argument('--plr',
+                        default=0.001,
                         type=float,
-                        help='entropy regularization coefficient')
+                        help='policy learning rate')
+    parser.add_argument('--qlr',
+                        default=0.001,
+                        type=float,
+                        help='Q-networks learning rate')
     parser.add_argument('--gamma', default=0.99, type=float, help='')
     parser.add_argument('--batch-size',
                         default=512,
@@ -44,6 +47,13 @@ def args_parser():
                         default=0.995,
                         type=float,
                         help='moving average for target network')
+    parser.add_argument(
+        '--policy-delay',
+        default=2,
+        type=int,
+        help=
+        'Policy will only be updated once every policy_delay times for each update of the Q-networks.'
+    )
     parser.add_argument(
         '--validate-episodes',
         default=100,
@@ -88,21 +98,25 @@ def main():
         return gym.make(args.env)
 
     # ddpg
-    sac_pytorch(env_fn,
+    td3_pytorch(env_fn,
                 steps_per_epoch=args.steps_per_epoch,
                 epochs=args.epochs,
                 seed=args.seed,
                 replay_size=args.replay_size,
                 gamma=args.gamma,
                 polyak=args.polyak,
-                lr=args.lr,
-                alpha=args.alpha,
+                pi_lr=args.plr,
+                q_lr=args.qlr,
+                act_noise=0.1,
+                target_noise=0.2,
+                noise_clip=0.5,
+                policy_delay=args.policy_delay,
                 batch_size=args.batch_size,
                 start_steps=args.random_steps,
                 update_after=args.warmup,
                 num_test_episodes=args.validate_episodes,
                 max_ep_len=args.max_episode_length,
-                logger_kwargs={'output_dir': './logs-sac'})
+                logger_kwargs={'output_dir': './logs-td3'})
 
 
 if __name__ == '__main__':

@@ -64,8 +64,7 @@ class MLPActorCritic(nn.Module):
                            act_limit)
         self.q = MLPQFunction(obs_dim, act_dim, hidden_sizes, activation)
         # cuda
-        self.pi.cuda()
-        self.q.cuda()
+        self.cuda()
 
     def act(self, obs):
         with torch.no_grad():
