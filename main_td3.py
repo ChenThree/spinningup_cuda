@@ -28,7 +28,7 @@ def args_parser():
                         help='support option: train/test')
     parser.add_argument('--seed', default=2, type=int, help='random seed')
     parser.add_argument('--plr',
-                        default=0.001,
+                        default=0.0001,
                         type=float,
                         help='policy learning rate')
     parser.add_argument('--qlr',
@@ -66,7 +66,7 @@ def args_parser():
                         type=int,
                         help='train iters each timestep')
     parser.add_argument(
-        '--update-after',
+        '--warmup',
         default=5000,
         type=int,
         help=
