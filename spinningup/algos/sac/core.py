@@ -5,6 +5,8 @@ import torch.nn as nn
 import torch.nn.functional as F
 from torch.distributions.normal import Normal
 
+from ...utils.model import BaseModule
+
 
 def combined_shape(length, shape=None):
     if shape is None:
@@ -82,7 +84,7 @@ class MLPQFunction(nn.Module):
         return torch.squeeze(q, -1)  # Critical to ensure q has right shape.
 
 
-class MLPActorCritic(nn.Module):
+class MLPActorCritic(BaseModule):
 
     def __init__(self,
                  observation_space,
@@ -100,6 +102,8 @@ class MLPActorCritic(nn.Module):
                                            activation, act_limit)
         self.q1 = MLPQFunction(obs_dim, act_dim, hidden_sizes, activation)
         self.q2 = MLPQFunction(obs_dim, act_dim, hidden_sizes, activation)
+        # init weight
+        self.init_weights()
         # cuda
         self.cuda()
 

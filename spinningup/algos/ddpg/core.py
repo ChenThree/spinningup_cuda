@@ -3,6 +3,8 @@ import scipy.signal
 import torch
 import torch.nn as nn
 
+from ...utils.model import BaseModule
+
 
 def combined_shape(length, shape=None):
     if shape is None:
@@ -46,7 +48,7 @@ class MLPQFunction(nn.Module):
         return torch.squeeze(q, -1)  # Critical to ensure q has right shape.
 
 
-class MLPActorCritic(nn.Module):
+class MLPActorCritic(BaseModule):
 
     def __init__(self,
                  observation_space,
@@ -63,6 +65,8 @@ class MLPActorCritic(nn.Module):
         self.pi = MLPActor(obs_dim, act_dim, hidden_sizes, activation,
                            act_limit)
         self.q = MLPQFunction(obs_dim, act_dim, hidden_sizes, activation)
+        # init weight
+        self.init_weights()
         # cuda
         self.cuda()
 

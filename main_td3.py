@@ -67,7 +67,7 @@ def args_parser():
                         help='train iters each timestep')
     parser.add_argument(
         '--update-after',
-        default=1000,
+        default=5000,
         type=int,
         help=
         'Number of env interactions to collect before starting to do gradient descent updates'

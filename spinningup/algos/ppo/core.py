@@ -6,6 +6,8 @@ from gym.spaces import Box, Discrete
 from torch.distributions.categorical import Categorical
 from torch.distributions.normal import Normal
 
+from ...utils.model import BaseModule
+
 
 def combined_shape(length, shape=None):
     if shape is None:
@@ -108,7 +110,7 @@ class MLPCritic(nn.Module):
                              -1)  # Critical to ensure v has right shape.
 
 
-class MLPActorCritic(nn.Module):
+class MLPActorCritic(BaseModule):
 
     def __init__(self,
                  observation_space,
@@ -129,6 +131,8 @@ class MLPActorCritic(nn.Module):
 
         # build value function
         self.v = MLPCritic(obs_dim, hidden_sizes, activation)
+        # init weight
+        self.init_weights()
         # cuda
         self.cuda()
 

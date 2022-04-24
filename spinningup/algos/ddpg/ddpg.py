@@ -189,7 +189,7 @@ def ddpg(env_fn,
         # Bellman backup for Q function
         with torch.no_grad():
             q_pi_targ = ac_targ.q(o2, ac_targ.pi(o2))
-            backup = r + gamma * d * q_pi_targ
+            backup = r + gamma * (1 - d) * q_pi_targ
 
         # MSE loss against Bellman backup
         loss_q = ((q - backup)**2).mean()

@@ -224,7 +224,7 @@ def td3(env_fn,
             q1_pi_targ = ac_targ.q1(o2, a2)
             q2_pi_targ = ac_targ.q2(o2, a2)
             q_pi_targ = torch.min(q1_pi_targ, q2_pi_targ)
-            backup = r + gamma * d * q_pi_targ
+            backup = r + gamma * (1 - d) * q_pi_targ
 
         # MSE loss against Bellman backup
         loss_q1 = ((q1 - backup)**2).mean()
@@ -315,7 +315,7 @@ def td3(env_fn,
                     ep_ret += r
                     ep_len += 1
                 # success rate for robel
-                logger.store(TestSuccess=int(info['score/success']))
+                # logger.store(TestSuccess=int(info['score/success']))
                 logger.store(TestEpRet=ep_ret, TestEpLen=ep_len)
         ac.train()
 
@@ -355,7 +355,7 @@ def td3(env_fn,
         # End of trajectory handling
         if d or (ep_len == max_ep_len):
             # success rate for robel
-            logger.store(Success=int(info['score/success']))
+            # logger.store(Success=int(info['score/success']))
             logger.store(EpRet=ep_ret, EpLen=ep_len)
             o, ep_ret, ep_len = env.reset(), 0, 0
 
@@ -378,9 +378,9 @@ def td3(env_fn,
 
             # Log info about epoch
             logger.log_tabular('Epoch', epoch)
-            logger.log_tabular('Success', average_only=True)
+            # logger.log_tabular('Success', average_only=True)
             logger.log_tabular('EpRet', with_min_and_max=True)
-            logger.log_tabular('TestSuccess', average_only=True)
+            # logger.log_tabular('TestSuccess', average_only=True)
             logger.log_tabular('TestEpRet', with_min_and_max=True)
             logger.log_tabular('EpLen', average_only=True)
             logger.log_tabular('TestEpLen', average_only=True)
