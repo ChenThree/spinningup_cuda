@@ -199,8 +199,8 @@ def sac(env_fn,
 
     # Set up function for computing SAC Q-losses
     def compute_loss_q(data):
-        o, a, r, o2, d = data['obs'], data['act'], data['rew'], data[
-            'obs2'], data['done']
+        o, a, r, o2, d = data['obs'].cuda(), data['act'].cuda(
+        ), data['rew'].cuda(), data['obs2'].cuda(), data['done'].cuda()
 
         q1 = ac.q1(o, a)
         q2 = ac.q2(o, a)
@@ -222,13 +222,14 @@ def sac(env_fn,
         loss_q = loss_q1 + loss_q2
 
         # Useful info for logging
-        q_info = dict(Q1Vals=q1.detach().numpy(), Q2Vals=q2.detach().numpy())
+        q_info = dict(Q1Vals=q1.detach().cpu().numpy(),
+                      Q2Vals=q2.detach().cpu().numpy())
 
         return loss_q, q_info
 
     # Set up function for computing SAC pi loss
     def compute_loss_pi(data):
-        o = data['obs']
+        o = data['obs'].cuda()
         pi, logp_pi = ac.pi(o)
         q1_pi = ac.q1(o, pi)
         q2_pi = ac.q2(o, pi)
@@ -238,7 +239,7 @@ def sac(env_fn,
         loss_pi = (alpha * logp_pi - q_pi).mean()
 
         # Useful info for logging
-        pi_info = dict(LogPi=logp_pi.detach().numpy())
+        pi_info = dict(LogPi=logp_pi.detach().cpu().numpy())
 
         return loss_pi, pi_info
 

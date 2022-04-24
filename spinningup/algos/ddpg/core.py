@@ -34,9 +34,6 @@ class MLPActor(nn.Module):
         # Return output from network scaled to action space limits.
         return self.act_limit * self.pi(obs)
 
-    def cuda(self):
-        self.pi.cuda()
-
 
 class MLPQFunction(nn.Module):
 
@@ -47,9 +44,6 @@ class MLPQFunction(nn.Module):
     def forward(self, obs, act):
         q = self.q(torch.cat([obs, act], dim=-1))
         return torch.squeeze(q, -1)  # Critical to ensure q has right shape.
-
-    def cuda(self):
-        self.q.cuda()
 
 
 class MLPActorCritic(nn.Module):

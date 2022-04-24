@@ -100,8 +100,12 @@ class MLPActorCritic(nn.Module):
                                            activation, act_limit)
         self.q1 = MLPQFunction(obs_dim, act_dim, hidden_sizes, activation)
         self.q2 = MLPQFunction(obs_dim, act_dim, hidden_sizes, activation)
+        # cuda
+        self.pi.cuda()
+        self.q1.cuda()
+        self.q2.cuda()
 
     def act(self, obs, deterministic=False):
         with torch.no_grad():
             a, _ = self.pi(obs, deterministic, False)
-            return a.numpy()
+            return a.cpu().numpy()

@@ -67,7 +67,7 @@ def args_parser():
                         type=int,
                         help='train iters each timestep')
     parser.add_argument('--random-steps',
-                        default=200000,
+                        default=100000,
                         type=int,
                         help='linear decay of exploration policy')
     parser.add_argument('--noise', default=0.1, type=float, help='train noise')
@@ -106,7 +106,7 @@ def main():
                  update_after=args.warmup,
                  num_test_episodes=args.validate_episodes,
                  max_ep_len=args.max_episode_length,
-                 logger_kwargs={'output_dir': '.logs'})
+                 logger_kwargs={'output_dir': '.logs-ddpg'})
 
 
 if __name__ == '__main__':

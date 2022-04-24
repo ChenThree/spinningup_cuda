@@ -181,34 +181,6 @@ class Logger:
             if hasattr(self, 'pytorch_saver_elements'):
                 self._pytorch_simple_save(itr)
 
-    def setup_tf_saver(self, sess, inputs, outputs):
-        """
-        Set up easy model saving for tensorflow.
-
-        Call once, after defining your computation graph but before training.
-
-        Args:
-            sess: The Tensorflow session in which you train your computation
-                graph.
-
-            inputs (dict): A dictionary that maps from keys of your choice
-                to the tensorflow placeholders that serve as inputs to the
-                computation graph. Make sure that *all* of the placeholders
-                needed for your outputs are included!
-
-            outputs (dict): A dictionary that maps from keys of your choice
-                to the outputs from your computation graph.
-        """
-        self.tf_saver_elements = dict(session=sess,
-                                      inputs=inputs,
-                                      outputs=outputs)
-        self.tf_saver_info = {
-            'inputs': {k: v.name
-                       for k, v in inputs.items()},
-            'outputs': {k: v.name
-                        for k, v in outputs.items()}
-        }
-
     def setup_pytorch_saver(self, what_to_save):
         """
         Set up easy model saving for a single PyTorch model.

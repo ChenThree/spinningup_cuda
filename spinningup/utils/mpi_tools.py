@@ -86,7 +86,7 @@ def mpi_statistics_scalar(x, with_min_and_max=False):
         with_min_and_max (bool): If true, return min and max of x in
             addition to mean and std.
     """
-    x = np.array(x, dtype=np.float32)
+    x = np.array(x, dtype=np.float64)
     global_sum, global_n = mpi_sum([np.sum(x), len(x)])
     mean = global_sum / global_n
 
