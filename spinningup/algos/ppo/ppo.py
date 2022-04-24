@@ -367,8 +367,8 @@ def ppo(env_fn,
 
         # Log info about epoch
         logger.log_tabular('Epoch', epoch)
-        logger.log_tabular('Success', average_only=True)
         logger.log_tabular('EpRet', with_min_and_max=True)
+        logger.log_tabular('Success', average_only=True)
         logger.log_tabular('EpLen', average_only=True)
         logger.log_tabular('VVals', with_min_and_max=True)
         logger.log_tabular('TotalEnvInteracts', (epoch + 1) * steps_per_epoch)

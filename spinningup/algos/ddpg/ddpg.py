@@ -58,8 +58,8 @@ def ddpg(env_fn,
          pi_lr=1e-3,
          q_lr=1e-3,
          batch_size=100,
-         start_steps=10000,
-         update_after=1000,
+         random_steps=10000,
+         warmup=1000,
          update_every=50,
          act_noise=0.1,
          num_test_episodes=10,
@@ -123,10 +123,10 @@ def ddpg(env_fn,
 
         batch_size (int): Minibatch size for SGD.
 
-        start_steps (int): Number of steps for uniform-random action selection,
+        random_steps (int): Number of steps for uniform-random action selection,
             before running real policy. Helps exploration.
 
-        update_after (int): Number of env interactions to collect before
+        warmup (int): Number of env interactions to collect before
             starting to do gradient descent updates. Ensures replay buffer
             is full enough for useful updates.
 
@@ -285,10 +285,10 @@ def ddpg(env_fn,
     # Main loop: collect experience in env and update/log each epoch
     for t in range(total_steps):
 
-        # Until start_steps have elapsed, randomly sample actions
+        # Until random_steps have elapsed, randomly sample actions
         # from a uniform distribution for better exploration. Afterwards,
         # use the learned policy (with some noise, via act_noise).
-        if t > start_steps:
+        if t > random_steps:
             a = get_action(o, act_noise)
         else:
             a = env.action_space.sample()
@@ -298,10 +298,9 @@ def ddpg(env_fn,
         ep_ret += r
         ep_len += 1
 
-        # Ignore the "done" signal if it comes from hitting the time
-        # horizon (that is, when it's an artificial terminal signal
-        # that isn't based on the agent's state)
-        d = False if ep_len == max_ep_len else d
+        # consider max episode as done
+        if ep_len == max_ep_len:
+            d = True
 
         # Store experience to replay buffer
         replay_buffer.store(o, a, r, o2, d)
@@ -318,7 +317,7 @@ def ddpg(env_fn,
             o, ep_ret, ep_len = env.reset(), 0, 0
 
         # Update handling
-        if t >= update_after and t % update_every == 0:
+        if t >= warmup and t % update_every == 0:
             for _ in range(update_every):
                 batch = replay_buffer.sample_batch(batch_size)
                 update(data=batch)
