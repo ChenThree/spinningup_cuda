@@ -204,8 +204,8 @@ def td3(env_fn,
 
     # Set up function for computing TD3 Q-losses
     def compute_loss_q(data):
-        o, a, r, o2, d = data['obs'], data['act'], data['rew'], data[
-            'obs2'], data['done']
+        o, a, r, o2, d = data['obs'].cuda(), data['act'].cuda(
+        ), data['rew'].cuda(), data['obs2'].cuda(), data['done'].cuda()
 
         q1 = ac.q1(o, a)
         q2 = ac.q2(o, a)
@@ -232,13 +232,14 @@ def td3(env_fn,
         loss_q = loss_q1 + loss_q2
 
         # Useful info for logging
-        loss_info = dict(Q1Vals=q1.detach().numpy(), Q2Vals=q2.detach().numpy())
+        loss_info = dict(Q1Vals=q1.detach().cpu().numpy(),
+                         Q2Vals=q2.detach().cpu().numpy())
 
         return loss_q, loss_info
 
     # Set up function for computing TD3 pi loss
     def compute_loss_pi(data):
-        o = data['obs']
+        o = data['obs'].cuda()
         q1_pi = ac.q1(o, ac.pi(o))
         return -q1_pi.mean()
 
@@ -289,7 +290,7 @@ def td3(env_fn,
                     p_targ.data.add_((1 - polyak) * p.data)
 
     def get_action(o, noise_scale):
-        a = ac.act(torch.as_tensor(o, dtype=torch.float32))
+        a = ac.act(torch.as_tensor(o, dtype=torch.float32).cuda())
         a += noise_scale * np.random.randn(act_dim)
         return np.clip(a, -act_limit, act_limit)
 
