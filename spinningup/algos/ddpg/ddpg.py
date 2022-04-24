@@ -323,6 +323,7 @@ def ddpg(env_fn,
             logger.log_tabular('Epoch', epoch)
             logger.log_tabular('Success', average_only=True)
             logger.log_tabular('EpRet', with_min_and_max=True)
+            logger.log_tabular('TestSuccess', average_only=True)
             logger.log_tabular('TestEpRet', with_min_and_max=True)
             logger.log_tabular('EpLen', average_only=True)
             logger.log_tabular('TestEpLen', average_only=True)
