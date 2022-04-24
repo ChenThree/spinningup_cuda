@@ -34,11 +34,6 @@ def args_parser():
                         default=0.001,
                         type=float,
                         help='Q-networks learning rate')
-    parser.add_argument(
-        '--warmup',
-        default=50000,
-        type=int,
-        help='time without training but only filling the replay memory')
     parser.add_argument('--gamma', default=0.99, type=float, help='')
     parser.add_argument('--batch-size',
                         default=512,
@@ -62,6 +57,11 @@ def args_parser():
                         default=100,
                         type=int,
                         help='train iters each timestep')
+    parser.add_argument(
+        '--warmup',
+        default=5000,
+        type=int,
+        help='time without training but only filling the replay memory')
     parser.add_argument('--steps-per-epoch',
                         default=10000,
                         type=int,

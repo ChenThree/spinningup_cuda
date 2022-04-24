@@ -182,9 +182,8 @@ def ddpg(env_fn,
 
     # Set up function for computing DDPG Q-loss
     def compute_loss_q(data):
-        o, a, r, o2, d = data['obs'], data['act'], data['rew'], data[
-            'obs2'], data['done']
-
+        o, a, r, o2, d = data['obs'].cuda(), data['act'].cuda(
+        ), data['rew'].cuda(), data['obs2'].cuda(), data['done'].cuda()
         q = ac.q(o, a)
 
         # Bellman backup for Q function
@@ -196,13 +195,13 @@ def ddpg(env_fn,
         loss_q = ((q - backup)**2).mean()
 
         # Useful info for logging
-        loss_info = dict(QVals=q.detach().numpy())
+        loss_info = dict(QVals=q.detach().cpu().numpy())
 
         return loss_q, loss_info
 
     # Set up function for computing DDPG pi loss
     def compute_loss_pi(data):
-        o = data['obs']
+        o = data['obs'].cuda()
         q_pi = ac.q(o, ac.pi(o))
         return -q_pi.mean()
 
@@ -342,7 +341,7 @@ if __name__ == '__main__':
     parser.add_argument('--exp_name', type=str, default='ddpg')
     args = parser.parse_args()
 
-    from spinup.utils.run_utils import setup_logger_kwargs
+    from ...utils.run_utils import setup_logger_kwargs
     logger_kwargs = setup_logger_kwargs(args.exp_name, args.seed)
 
     ddpg(lambda: gym.make(args.env),
