@@ -36,14 +36,6 @@ def args_parser():
                         type=float,
                         help='Learning rate for value function optimizer')
     parser.add_argument('--gamma', default=0.99, type=float, help='')
-    parser.add_argument('--batch-size',
-                        default=512,
-                        type=int,
-                        help='minibatch size')
-    parser.add_argument('--replay-size',
-                        default=1000000,
-                        type=int,
-                        help='replay-size')
     parser.add_argument(
         '--validate-episodes',
         default=100,
@@ -54,11 +46,6 @@ def args_parser():
                         default=100,
                         type=int,
                         help='train iters each timestep')
-    parser.add_argument(
-        '--warmup',
-        default=5000,
-        type=int,
-        help='time without training but only filling the replay memory')
     parser.add_argument('--steps-per-epoch',
                         default=10000,
                         type=int,
@@ -67,10 +54,6 @@ def args_parser():
                         default=None,
                         type=str,
                         help='Resuming model path for testing')
-    parser.add_argument('--output',
-                        default='./checkpoint/ddpg1',
-                        type=str,
-                        help='output path')
     return parser.parse_args()
 
 
@@ -94,8 +77,6 @@ def main():
                 gamma=args.gamma,
                 pi_lr=args.plr,
                 vf_lr=args.vflr,
-                train_v_iters=80,
-                lam=0.97,
                 max_ep_len=args.max_episode_length,
                 logger_kwargs={'output_dir': './logs-vpg'})
 

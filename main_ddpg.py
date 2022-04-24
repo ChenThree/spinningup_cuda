@@ -59,10 +59,19 @@ def args_parser():
                         type=int,
                         help='train iters each timestep')
     parser.add_argument(
-        '--warmup',
-        default=5000,
+        '--update-after',
+        default=1000,
         type=int,
-        help='time without training but only filling the replay memory')
+        help=
+        'Number of env interactions to collect before starting to do gradient descent updates'
+    )
+    parser.add_argument(
+        '--update-every',
+        default=10,
+        type=int,
+        help=
+        'Number of env interactions that should elapse between gradient descent updates'
+    )
     parser.add_argument('--steps-per-epoch',
                         default=10000,
                         type=int,
@@ -76,10 +85,6 @@ def args_parser():
                         default=None,
                         type=str,
                         help='Resuming model path for testing')
-    parser.add_argument('--output',
-                        default='./checkpoint/ddpg1',
-                        type=str,
-                        help='output path')
     return parser.parse_args()
 
 
@@ -108,7 +113,8 @@ def main():
                  act_noise=args.noise,
                  batch_size=args.batch_size,
                  start_steps=args.random_steps,
-                 update_after=args.warmup,
+                 update_after=args.update_after,
+                 update_every=args.update_every,
                  num_test_episodes=args.validate_episodes,
                  max_ep_len=args.max_episode_length,
                  logger_kwargs={'output_dir': './logs-ddpg'})
