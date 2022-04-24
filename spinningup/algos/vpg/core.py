@@ -129,6 +129,8 @@ class MLPActorCritic(nn.Module):
 
         # build value function
         self.v = MLPCritic(obs_dim, hidden_sizes, activation)
+        # cuda
+        self.cuda()
 
     def step(self, obs):
         with torch.no_grad():
@@ -136,7 +138,7 @@ class MLPActorCritic(nn.Module):
             a = pi.sample()
             logp_a = self.pi._log_prob_from_distribution(pi, a)
             v = self.v(obs)
-        return a.numpy(), v.numpy(), logp_a.numpy()
+        return a.cpu().numpy(), v.cpu().numpy(), logp_a.cpu().numpy()
 
     def act(self, obs):
         return self.step(obs)[0]

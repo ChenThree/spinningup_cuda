@@ -9,7 +9,7 @@ import robel
 import torch
 import torch.nn as nn
 
-from spinningup import ddpg_pytorch
+from spinningup import ppo_pytorch
 
 os.environ['CUDA_VISIBLE_DEVICES'] = '0'
 torch.backends.cudnn.enabled = True
@@ -28,13 +28,13 @@ def args_parser():
                         help='support option: train/test')
     parser.add_argument('--seed', default=2, type=int, help='random seed')
     parser.add_argument('--plr',
-                        default=0.001,
+                        default=0.0003,
                         type=float,
                         help='policy learning rate')
-    parser.add_argument('--qlr',
+    parser.add_argument('--vflr',
                         default=0.001,
                         type=float,
-                        help='Q-networks learning rate')
+                        help='Learning rate for value function optimizer')
     parser.add_argument('--gamma', default=0.99, type=float, help='')
     parser.add_argument('--batch-size',
                         default=512,
@@ -44,10 +44,6 @@ def args_parser():
                         default=1000000,
                         type=int,
                         help='replay-size')
-    parser.add_argument('--polyak',
-                        default=0.995,
-                        type=float,
-                        help='moving average for target network')
     parser.add_argument(
         '--validate-episodes',
         default=100,
@@ -67,11 +63,6 @@ def args_parser():
                         default=10000,
                         type=int,
                         help='train iters each timestep')
-    parser.add_argument('--random-steps',
-                        default=100000,
-                        type=int,
-                        help='linear decay of exploration policy')
-    parser.add_argument('--noise', default=0.1, type=float, help='train noise')
     parser.add_argument('--resume',
                         default=None,
                         type=str,
@@ -91,27 +82,25 @@ def main():
     def env_fn():
         return gym.make(args.env)
 
-    # ddpg
-    ddpg_pytorch(env_fn,
-                 ac_kwargs={
-                     'hidden_sizes': (256, 256 * 4, 256),
-                     'activation': nn.SiLU,
-                 },
-                 steps_per_epoch=args.steps_per_epoch,
-                 epochs=args.epochs,
-                 seed=args.seed,
-                 replay_size=args.replay_size,
-                 gamma=args.gamma,
-                 polyak=args.polyak,
-                 pi_lr=args.plr,
-                 q_lr=args.qlr,
-                 act_noise=args.noise,
-                 batch_size=args.batch_size,
-                 start_steps=args.random_steps,
-                 update_after=args.warmup,
-                 num_test_episodes=args.validate_episodes,
-                 max_ep_len=args.max_episode_length,
-                 logger_kwargs={'output_dir': './logs-ddpg'})
+    # ppo
+    ppo_pytorch(env_fn,
+                ac_kwargs={
+                    'hidden_sizes': (256, 256 * 4, 256),
+                    'activation': nn.SiLU,
+                },
+                steps_per_epoch=args.steps_per_epoch,
+                epochs=args.epochs,
+                seed=args.seed,
+                gamma=args.gamma,
+                pi_lr=args.plr,
+                vf_lr=args.vflr,
+                clip_ratio=0.2,
+                train_pi_iters=80,
+                train_v_iters=80,
+                lam=0.97,
+                target_kl=0.01,
+                max_ep_len=args.max_episode_length,
+                logger_kwargs={'output_dir': './logs-ppo'})
 
 
 if __name__ == '__main__':

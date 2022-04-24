@@ -227,8 +227,8 @@ def vpg(env_fn,
 
     # Set up function for computing VPG policy loss
     def compute_loss_pi(data):
-        obs, act, adv, logp_old = data['obs'], data['act'], data['adv'], data[
-            'logp']
+        obs, act, adv, logp_old = data['obs'].cuda(), data['act'].cuda(
+        ), data['adv'].cuda(), data['logp'].cuda()
 
         # Policy loss
         pi, logp = ac.pi(obs, act)
@@ -243,7 +243,7 @@ def vpg(env_fn,
 
     # Set up function for computing value loss
     def compute_loss_v(data):
-        obs, ret = data['obs'], data['ret']
+        obs, ret = data['obs'].cuda(), data['ret'].cuda()
         return ((ac.v(obs) - ret)**2).mean()
 
     # Set up optimizers for policy and value function
@@ -292,7 +292,7 @@ def vpg(env_fn,
     # Main loop: collect experience in env and update/log each epoch
     for epoch in range(epochs):
         for t in range(local_steps_per_epoch):
-            a, v, logp = ac.step(torch.as_tensor(o, dtype=torch.float32))
+            a, v, logp = ac.step(torch.as_tensor(o, dtype=torch.float32).cuda())
 
             next_o, r, d, _ = env.step(a)
             ep_ret += r
@@ -316,7 +316,8 @@ def vpg(env_fn,
                           flush=True)
                 # if trajectory didn't reach terminal state, bootstrap value target
                 if timeout or epoch_ended:
-                    _, v, _ = ac.step(torch.as_tensor(o, dtype=torch.float32))
+                    _, v, _ = ac.step(
+                        torch.as_tensor(o, dtype=torch.float32).cuda())
                 else:
                     v = 0
                 buf.finish_path(v)

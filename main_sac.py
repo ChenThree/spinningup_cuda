@@ -7,6 +7,7 @@ import gym
 import numpy as np
 import robel
 import torch
+import torch.nn as nn
 
 from spinningup import sac_pytorch
 
@@ -87,8 +88,12 @@ def main():
     def env_fn():
         return gym.make(args.env)
 
-    # ddpg
+    # sac
     sac_pytorch(env_fn,
+                ac_kwargs={
+                    'hidden_sizes': (256, 256 * 4, 256),
+                    'activation': nn.SiLU,
+                },
                 steps_per_epoch=args.steps_per_epoch,
                 epochs=args.epochs,
                 seed=args.seed,
