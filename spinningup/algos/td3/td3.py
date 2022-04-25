@@ -35,7 +35,9 @@ class ReplayBuffer:
         self.size = min(self.size + 1, self.max_size)
 
     def sample_batch(self, batch_size=32):
-        idxs = np.random.randint(0, self.size, size=batch_size)
+        idxs = np.random.choice(np.arange(0, self.size),
+                                size=batch_size,
+                                replace=False)
         batch = dict(obs=self.obs_buf[idxs],
                      obs2=self.obs2_buf[idxs],
                      act=self.act_buf[idxs],
