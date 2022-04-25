@@ -5,8 +5,8 @@ python main_td3.py \
 --policy-delay 2 \
 --polyak 0.995 \
 --epochs 100 \
---steps-per-epoch 20000 \
---warmup 10000 \
+--steps-per-epoch 10000 \
+--warmup 5000 \
 --eps-decay 100000 \
 --update-every 1 \
 --validate-episodes 100

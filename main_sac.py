@@ -77,7 +77,7 @@ def args_parser():
                         type=int,
                         help='train iters each timestep')
     parser.add_argument('--random-steps',
-                        default=100000,
+                        default=10000,
                         type=int,
                         help='linear decay of exploration policy')
     parser.add_argument('--noise', default=0.1, type=float, help='train noise')

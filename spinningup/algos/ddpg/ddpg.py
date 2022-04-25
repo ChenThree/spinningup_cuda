@@ -192,7 +192,7 @@ def ddpg(env_fn,
             backup = r + gamma * (1 - d) * q_pi_targ
 
         # MSE loss against Bellman backup
-        loss_q = ((q - backup)**2).mean()
+        loss_q = ((q - backup).square()).mean()
 
         # Useful info for logging
         loss_info = dict(QVals=q.detach().cpu().numpy())

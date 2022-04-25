@@ -1,7 +1,7 @@
-python main_ddpg.py \
+python main_sac.py \
 --batch-size 4096 \
---plr 0.001 \
---qlr 0.001 \
+--lr 0.001 \
+--alpha 0.2 \
 --polyak 0.995 \
 --epochs 100 \
 --steps-per-epoch 10000 \

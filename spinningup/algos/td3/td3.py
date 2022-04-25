@@ -227,8 +227,8 @@ def td3(env_fn,
             backup = r + gamma * (1 - d) * q_pi_targ
 
         # MSE loss against Bellman backup
-        loss_q1 = ((q1 - backup)**2).mean()
-        loss_q2 = ((q2 - backup)**2).mean()
+        loss_q1 = ((q1 - backup).square()).mean()
+        loss_q2 = ((q2 - backup).square()).mean()
         loss_q = loss_q1 + loss_q2
 
         # Useful info for logging
