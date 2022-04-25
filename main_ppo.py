@@ -38,11 +38,6 @@ def args_parser():
                         type=float,
                         help='Learning rate for value function optimizer')
     parser.add_argument('--gamma', default=0.99, type=float, help='')
-    parser.add_argument(
-        '--validate-episodes',
-        default=100,
-        type=int,
-        help='how many episode to perform during validate experiment')
     parser.add_argument('--max-episode-length', default=2000, type=int, help='')
     parser.add_argument('--epochs',
                         default=100,

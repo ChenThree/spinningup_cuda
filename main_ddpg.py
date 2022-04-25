@@ -28,7 +28,7 @@ def args_parser():
                         help='support option: train/test')
     parser.add_argument('--seed', default=2, type=int, help='random seed')
     parser.add_argument('--plr',
-                        default=0.0001,
+                        default=0.001,
                         type=float,
                         help='policy learning rate')
     parser.add_argument('--qlr',
@@ -76,14 +76,10 @@ def args_parser():
                         default=10000,
                         type=int,
                         help='train iters each timestep')
-    parser.add_argument(
-        '--random-steps',
-        default=100000,
-        type=int,
-        help=
-        'Number of steps for uniform-random action selection, before running real policy'
-    )
-    parser.add_argument('--noise', default=0.1, type=float, help='train noise')
+    parser.add_argument('--eps-decay',
+                        default=100000,
+                        type=int,
+                        help='eps-greedy pro decay steps')
     parser.add_argument('--resume',
                         default=None,
                         type=str,
@@ -113,9 +109,8 @@ def main():
                  polyak=args.polyak,
                  pi_lr=args.plr,
                  q_lr=args.qlr,
-                 act_noise=args.noise,
                  batch_size=args.batch_size,
-                 random_steps=args.random_steps,
+                 eps_decay=args.eps_decay,
                  warmup=args.warmup,
                  update_every=args.update_every,
                  num_test_episodes=args.validate_episodes,

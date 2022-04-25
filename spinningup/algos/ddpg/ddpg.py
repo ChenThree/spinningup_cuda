@@ -58,10 +58,9 @@ def ddpg(env_fn,
          pi_lr=1e-3,
          q_lr=1e-3,
          batch_size=100,
-         random_steps=10000,
+         eps_decay=10000,
          warmup=1000,
          update_every=50,
-         act_noise=0.1,
          num_test_episodes=10,
          max_ep_len=1000,
          logger_kwargs=dict(),
@@ -123,7 +122,7 @@ def ddpg(env_fn,
 
         batch_size (int): Minibatch size for SGD.
 
-        random_steps (int): Number of steps for uniform-random action selection,
+        eps_decay (int): Number of steps for uniform-random action selection,
             before running real policy. Helps exploration.
 
         warmup (int): Number of env interactions to collect before
@@ -134,9 +133,6 @@ def ddpg(env_fn,
             between gradient descent updates. Note: Regardless of how long
             you wait between updates, the ratio of env steps to gradient steps
             is locked to 1.
-
-        act_noise (float): Stddev for Gaussian exploration noise added to
-            policy at training time. (At test time, no noise is added.)
 
         num_test_episodes (int): Number of episodes to test the deterministic
             policy at the end of each epoch.
@@ -162,6 +158,8 @@ def ddpg(env_fn,
 
     # Action limit for clamping: critically, assumes all dimensions share the same bound!
     act_limit = env.action_space.high[0]
+    act_noise = 0.99
+    eps_decay = 1 / eps_decay
 
     # Create actor-critic module and target networks
     ac = actor_critic(env.observation_space, env.action_space, **ac_kwargs)
@@ -258,7 +256,8 @@ def ddpg(env_fn,
                 p_targ.data.add_((1 - polyak) * p.data)
 
     def get_action(o, noise_scale):
-        a = ac.act(torch.as_tensor(o, dtype=torch.float32).cuda())
+        with torch.no_grad():
+            a = ac.act(torch.as_tensor(o, dtype=torch.float32).cuda())
         a += noise_scale * np.random.randn(act_dim)
         return np.clip(a, -act_limit, act_limit)
 
@@ -285,11 +284,13 @@ def ddpg(env_fn,
     # Main loop: collect experience in env and update/log each epoch
     for t in range(total_steps):
 
-        # Until random_steps have elapsed, randomly sample actions
+        # Until warmup have elapsed, randomly sample actions
         # from a uniform distribution for better exploration. Afterwards,
         # use the learned policy (with some noise, via act_noise).
-        if t > random_steps:
+        if t > warmup:
             a = get_action(o, act_noise)
+            # eps decay
+            act_noise = max(act_noise - eps_decay, 0)
         else:
             a = env.action_space.sample()
 
