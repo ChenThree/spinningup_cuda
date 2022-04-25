@@ -250,10 +250,8 @@ def ddpg(env_fn,
         # Finally, update target networks by polyak averaging.
         with torch.no_grad():
             for p, p_targ in zip(ac.parameters(), ac_targ.parameters()):
-                # NB: We use an in-place operations "mul_", "add_" to update target
-                # params, as opposed to "mul" and "add", which would make new tensors.
-                p_targ.data.mul_(polyak)
-                p_targ.data.add_((1 - polyak) * p.data)
+                # use an in-place operations to update target
+                p_targ.data.copy_(polyak * p_targ.data + (1 - polyak) * p.data)
 
     def get_action(o, noise_scale):
         with torch.no_grad():

@@ -83,11 +83,10 @@ def args_parser():
                         default=10000,
                         type=int,
                         help='train iters each timestep')
-    parser.add_argument('--random-steps',
+    parser.add_argument('--eps-decay',
                         default=100000,
                         type=int,
                         help='linear decay of exploration policy')
-    parser.add_argument('--noise', default=0.1, type=float, help='train noise')
     parser.add_argument('--resume',
                         default=None,
                         type=str,
@@ -119,7 +118,7 @@ def main():
                 q_lr=args.qlr,
                 policy_delay=args.policy_delay,
                 batch_size=args.batch_size,
-                random_steps=args.random_steps,
+                eps_decay=args.eps_decay,
                 warmup=args.warmup,
                 update_every=args.update_every,
                 num_test_episodes=args.validate_episodes,
