@@ -365,7 +365,7 @@ def sac(env_fn,
                     batch = replay_buffer.sample_batch(batch_size)
                     update(data=batch)
         else:
-            logger.store(LossQ=0, LossPi=0, Q1Vals=0, Q2Vals=0)
+            logger.store(LossQ=0, LossPi=0, LogPi=0, Q1Vals=0, Q2Vals=0)
 
         # End of epoch handling
         if (t + 1) % steps_per_epoch == 0:
@@ -408,7 +408,7 @@ if __name__ == '__main__':
     parser.add_argument('--exp_name', type=str, default='sac')
     args = parser.parse_args()
 
-    from spinup.utils.run_utils import setup_logger_kwargs
+    from ...utils.run_utils import setup_logger_kwargs
     logger_kwargs = setup_logger_kwargs(args.exp_name, args.seed)
 
     torch.set_num_threads(torch.get_num_threads())
