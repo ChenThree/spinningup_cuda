@@ -370,10 +370,13 @@ def td3(env_fn,
             noise_process.reset()
 
         # Update handling
-        if t >= warmup and t % update_every == 0:
-            for j in range(update_every):
-                batch = replay_buffer.sample_batch(batch_size)
-                update(data=batch, timer=j)
+        if t >= warmup:
+            if t % update_every == 0:
+                for _ in range(update_every):
+                    batch = replay_buffer.sample_batch(batch_size)
+                    update(data=batch)
+        else:
+            logger.store(LossQ=0, LossPi=0, Q1Vals=0, Q2Vals=0)
 
         # End of epoch handling
         if (t + 1) % steps_per_epoch == 0:
