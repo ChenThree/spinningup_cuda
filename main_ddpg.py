@@ -10,6 +10,7 @@ import torch
 import torch.nn as nn
 
 from spinningup import ddpg_pytorch
+from spinningup.utils.mpi_tools import mpi_fork
 
 os.environ['CUDA_VISIBLE_DEVICES'] = '0'
 torch.backends.cudnn.enabled = True
@@ -18,6 +19,7 @@ torch.backends.cudnn.benchmark = False
 
 def args_parser():
     parser = argparse.ArgumentParser(description='DDPG DKiity')
+    parser.add_argument('--cpu', type=int, default=1)
     parser.add_argument('--env',
                         default='DKittyStandRandom-v0',
                         type=str,

@@ -148,10 +148,10 @@ def ddpg(env_fn,
             the current policy and value function.
 
     """
-
     logger = EpochLogger(**logger_kwargs)
     logger.save_config(locals())
 
+    # Random seed
     torch.manual_seed(seed)
     np.random.seed(seed)
 
@@ -221,7 +221,6 @@ def ddpg(env_fn,
         q_optimizer.zero_grad()
         loss_q, loss_info = compute_loss_q(data)
         loss_q.backward()
-
         # clamp grad
         for param in ac.q.parameters():
             if param.grad is not None:
@@ -238,7 +237,6 @@ def ddpg(env_fn,
         pi_optimizer.zero_grad()
         loss_pi = compute_loss_pi(data)
         loss_pi.backward()
-
         # clamp grad
         for param in ac.pi.parameters():
             if param.grad is not None:

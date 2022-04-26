@@ -1,11 +1,12 @@
 python main_ddpg.py \
+--cpu 2 \
 --batch-size 512 \
 --plr 0.0001 \
 --qlr 0.001 \
 --polyak 0.995 \
 --epochs 300 \
 --steps-per-epoch 10000 \
---warmup 50000 \
+--warmup 10000 \
 --eps-decay 200000 \
 --update-every 50 \
 --validate-episodes 100
