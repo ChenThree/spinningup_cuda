@@ -1,12 +1,12 @@
 python main_td3.py \
---batch-size 1024 \
---plr 0.001 \
+--batch-size 512 \
+--plr 0.0001 \
 --qlr 0.001 \
 --policy-delay 2 \
 --polyak 0.995 \
---epochs 100 \
+--epochs 300 \
 --steps-per-epoch 10000 \
---warmup 5000 \
---eps-decay 100000 \
---update-every 10 \
+--warmup 50000 \
+--eps-decay 200000 \
+--update-every 50 \
 --validate-episodes 100
