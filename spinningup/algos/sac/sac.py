@@ -219,8 +219,8 @@ def sac(env_fn,
             backup = r + gamma * (1 - d) * (q_pi_targ - alpha * logp_a2)
 
         # MSE loss against Bellman backup
-        loss_q1 = ((q1 - backup)**2).mean()
-        loss_q2 = ((q2 - backup)**2).mean()
+        loss_q1 = ((q1 - backup).square()).mean()
+        loss_q2 = ((q2 - backup).square()).mean()
         loss_q = loss_q1 + loss_q2
 
         # Useful info for logging
@@ -330,10 +330,10 @@ def sac(env_fn,
         # Until random_steps have elapsed, randomly sample actions
         # from a uniform distribution for better exploration. Afterwards,
         # use the learned policy.
-        if t > random_steps:
-            a = get_action(o)
-        else:
+        if t <= random_steps:
             a = env.action_space.sample()
+        else:
+            a = get_action(o)
 
         # Step the env
         o2, r, d, info = env.step(a)
@@ -352,7 +352,7 @@ def sac(env_fn,
         o = o2
 
         # End of trajectory handling
-        if d or (ep_len == max_ep_len):
+        if d:
             # success rate for robel
             logger.store(Success=int(info['score/success']))
             logger.store(EpRet=ep_ret, EpLen=ep_len)

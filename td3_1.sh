@@ -1,5 +1,5 @@
 python main_td3.py \
---batch-size 4096 \
+--batch-size 1024 \
 --plr 0.001 \
 --qlr 0.001 \
 --policy-delay 2 \

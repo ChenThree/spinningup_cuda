@@ -267,7 +267,7 @@ def ppo(env_fn,
     # Set up function for computing value loss
     def compute_loss_v(data):
         obs, ret = data['obs'].cuda(), data['ret'].cuda()
-        return ((ac.v(obs) - ret)**2).mean()
+        return ((ac.v(obs) - ret).square()).mean()
 
     # Set up optimizers for policy and value function
     pi_optimizer = Adam(ac.pi.parameters(), lr=pi_lr)
