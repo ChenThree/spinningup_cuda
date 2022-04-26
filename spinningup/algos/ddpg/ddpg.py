@@ -8,6 +8,7 @@ from torch.optim import Adam
 
 from ...utils.logx import EpochLogger
 from .core import *
+from .noise import OrnsteinUhlenbeckActionNoise
 
 
 class ReplayBuffer:
@@ -162,6 +163,9 @@ def ddpg(env_fn,
     act_limit = env.action_space.high[0]
     act_noise = 0.99
     eps_decay = 1 / eps_decay
+    noise_process = OrnsteinUhlenbeckActionNoise(mu=np.zeros((act_dim, )),
+                                                 sigma=0.2,
+                                                 theta=0.15)
 
     # Create actor-critic module and target networks
     ac = actor_critic(env.observation_space, env.action_space, **ac_kwargs)
@@ -255,10 +259,10 @@ def ddpg(env_fn,
                 # use an in-place operations to update target
                 p_targ.data.copy_(polyak * p_targ.data + (1 - polyak) * p.data)
 
-    def get_action(o, noise_scale):
+    def get_action(o, noise_scale, noise_process: OrnsteinUhlenbeckActionNoise):
         with torch.no_grad():
             a = ac.act(torch.as_tensor(o, dtype=torch.float32).cuda())
-        a += noise_scale * np.random.randn(act_dim)
+        a += noise_scale * noise_process()
         return np.clip(a, -act_limit, act_limit)
 
     def test_agent():
@@ -266,9 +270,11 @@ def ddpg(env_fn,
         with torch.no_grad():
             for j in range(num_test_episodes):
                 o, d, ep_ret, ep_len = test_env.reset(), False, 0, 0
+                noise_process.reset()
                 while not (d or (ep_len == max_ep_len)):
                     # Take deterministic actions at test time (noise_scale=0)
-                    o, r, d, info = test_env.step(get_action(o, 0))
+                    o, r, d, info = test_env.step(
+                        get_action(o, 0, noise_process))
                     ep_ret += r
                     ep_len += 1
                 # success rate
@@ -280,6 +286,7 @@ def ddpg(env_fn,
     total_steps = steps_per_epoch * epochs
     start_time = time.time()
     o, ep_ret, ep_len = env.reset(), 0, 0
+    noise_process.reset()
 
     # Main loop: collect experience in env and update/log each epoch
     for t in range(total_steps):
@@ -287,12 +294,12 @@ def ddpg(env_fn,
         # Until warmup have elapsed, randomly sample actions
         # from a uniform distribution for better exploration. Afterwards,
         # use the learned policy (with some noise, via act_noise).
-        if t > warmup:
-            a = get_action(o, act_noise)
+        if t <= warmup:
+            a = env.action_space.sample()
+        else:
+            a = get_action(o, act_noise, noise_process)
             # eps decay
             act_noise = max(act_noise - eps_decay, 0)
-        else:
-            a = env.action_space.sample()
 
         # Step the env
         o2, r, d, info = env.step(a)
@@ -311,11 +318,12 @@ def ddpg(env_fn,
         o = o2
 
         # End of trajectory handling
-        if d or (ep_len == max_ep_len):
+        if d:
             logger.store(EpRet=ep_ret, EpLen=ep_len)
             # success rate for robel
             logger.store(Success=int(info['score/success']))
             o, ep_ret, ep_len = env.reset(), 0, 0
+            noise_process.reset()
 
         # Update handling
         if t >= warmup and t % update_every == 0:

@@ -6,6 +6,6 @@ python main_sac.py \
 --epochs 100 \
 --steps-per-epoch 10000 \
 --warmup 5000 \
---eps-decay 100000 \
+--random-steps 10000 \
 --update-every 1 \
 --validate-episodes 100
