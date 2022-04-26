@@ -1,3 +1,4 @@
+import random
 import time
 from copy import deepcopy
 
@@ -35,9 +36,8 @@ class ReplayBuffer:
         self.size = min(self.size + 1, self.max_size)
 
     def sample_batch(self, batch_size=32):
-        idxs = np.random.choice(np.arange(0, self.size),
-                                size=batch_size,
-                                replace=False)
+        # np.random.choice slow when not replace
+        idxs = random.sample(range(0, self.size), batch_size)
         batch = dict(obs=self.obs_buf[idxs],
                      obs2=self.obs2_buf[idxs],
                      act=self.act_buf[idxs],

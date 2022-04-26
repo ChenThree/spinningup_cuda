@@ -1,5 +1,5 @@
 python main_sac.py \
---batch-size 4096 \
+--batch-size 1024 \
 --lr 0.001 \
 --alpha 0.2 \
 --polyak 0.995 \
@@ -7,5 +7,5 @@ python main_sac.py \
 --steps-per-epoch 10000 \
 --warmup 5000 \
 --random-steps 10000 \
---update-every 1 \
+--update-every 10 \
 --validate-episodes 100

@@ -8,5 +8,5 @@ python main_td3.py \
 --steps-per-epoch 10000 \
 --warmup 5000 \
 --eps-decay 100000 \
---update-every 1 \
+--update-every 10 \
 --validate-episodes 100
