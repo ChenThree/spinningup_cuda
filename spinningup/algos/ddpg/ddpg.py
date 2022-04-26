@@ -193,7 +193,7 @@ def ddpg(env_fn,
         # Bellman backup for Q function
         with torch.no_grad():
             q_pi_targ = ac_targ.q(o2, ac_targ.pi(o2))
-            backup = r + gamma * (1 - d) * q_pi_targ
+            backup = r + gamma * (d) * q_pi_targ
 
         # MSE loss against Bellman backup
         loss_q = ((q - backup).square()).mean()
@@ -326,10 +326,13 @@ def ddpg(env_fn,
             noise_process.reset()
 
         # Update handling
-        if t >= warmup and t % update_every == 0:
-            for _ in range(update_every):
-                batch = replay_buffer.sample_batch(batch_size)
-                update(data=batch)
+        if t >= warmup:
+            if t % update_every == 0:
+                for _ in range(update_every):
+                    batch = replay_buffer.sample_batch(batch_size)
+                    update(data=batch)
+        else:
+            logger.store(LossQ=0, LossPi=0, QVals=0)
 
         # End of epoch handling
         if (t + 1) % steps_per_epoch == 0:
