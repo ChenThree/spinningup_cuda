@@ -97,6 +97,8 @@ def main():
     def env_fn():
         return gym.make(args.env)
 
+    # run parallel code with mpi
+    mpi_fork(args.cpu)
     # ddpg
     ddpg_pytorch(env_fn,
                  ac_kwargs={
