@@ -1,11 +1,13 @@
 python main_sac.py \
+--env DKittyWalkRandom-v0 \
+--log-dir ./logs-sac-walk \
 --batch-size 2048 \
 --lr 0.001 \
 --alpha 0.2 \
 --polyak 0.995 \
---epochs 200 \
+--epochs 500 \
 --steps-per-epoch 10000 \
---warmup 10000 \
---random-steps 50000 \
+--warmup 50000 \
+--random-steps 100000 \
 --update-every 50 \
 --validate-episodes 100

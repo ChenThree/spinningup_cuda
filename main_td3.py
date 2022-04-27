@@ -91,6 +91,10 @@ def args_parser():
                         default=None,
                         type=str,
                         help='Resuming model path for testing')
+    parser.add_argument('--log-dir',
+                        default='./logs-td3',
+                        type=str,
+                        help='log dir')
     return parser.parse_args()
 
 
@@ -123,7 +127,7 @@ def main():
                 update_every=args.update_every,
                 num_test_episodes=args.validate_episodes,
                 max_ep_len=args.max_episode_length,
-                logger_kwargs={'output_dir': './logs-td3'})
+                logger_kwargs={'output_dir': args.log_dir})
 
 
 if __name__ == '__main__':

@@ -322,7 +322,7 @@ def td3(env_fn,
                     ep_ret += r
                     ep_len += 1
                 # success rate for robel
-                logger.store(TestSuccess=float(info['score/success']))
+                logger.store(TestSuccess=int(info['score/success']))
                 logger.store(TestEpRet=ep_ret, TestEpLen=ep_len)
         ac.train()
 
