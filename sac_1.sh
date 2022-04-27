@@ -6,6 +6,6 @@ python main_sac.py \
 --epochs 100 \
 --steps-per-epoch 10000 \
 --warmup 10000 \
---random-steps 100000 \
+--random-steps 50000 \
 --update-every 50 \
 --validate-episodes 100

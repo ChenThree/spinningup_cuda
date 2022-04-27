@@ -1,6 +1,6 @@
 python main_td3.py \
 --batch-size 1024 \
---plr 0.0001 \
+--plr 0.001 \
 --qlr 0.001 \
 --policy-delay 2 \
 --polyak 0.995 \
