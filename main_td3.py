@@ -9,11 +9,7 @@ import robel
 import torch
 import torch.nn as nn
 
-from spinningup import td3_pytorch
-
-os.environ['CUDA_VISIBLE_DEVICES'] = '0'
-torch.backends.cudnn.enabled = True
-torch.backends.cudnn.benchmark = False
+from spinningup import td3_pytorch, test_td3_pytorch
 
 
 def args_parser():
@@ -95,6 +91,10 @@ def args_parser():
                         default='./logs-td3',
                         type=str,
                         help='log dir')
+    parser.add_argument('--gpu-ids',
+                        default='0',
+                        type=str,
+                        help='pytorch gpu device id')
     return parser.parse_args()
 
 
@@ -102,32 +102,45 @@ def main():
     # read args
     args = args_parser()
 
+    # cuda setting
+    os.environ['CUDA_VISIBLE_DEVICES'] = args.gpu_ids
+    torch.backends.cudnn.enabled = True
+    torch.backends.cudnn.benchmark = False
+
     # prepare sim env
     def env_fn():
         return gym.make(args.env)
 
     # td3
-    td3_pytorch(env_fn,
-                ac_kwargs={
-                    'hidden_sizes': (256, 256 * 4, 256),
-                    'activation': nn.SiLU,
-                },
-                steps_per_epoch=args.steps_per_epoch,
-                epochs=args.epochs,
-                seed=args.seed,
-                replay_size=args.replay_size,
-                gamma=args.gamma,
-                polyak=args.polyak,
-                pi_lr=args.plr,
-                q_lr=args.qlr,
-                policy_delay=args.policy_delay,
-                batch_size=args.batch_size,
-                eps_decay=args.eps_decay,
-                warmup=args.warmup,
-                update_every=args.update_every,
-                num_test_episodes=args.validate_episodes,
-                max_ep_len=args.max_episode_length,
-                logger_kwargs={'output_dir': args.log_dir})
+    if args.mode == 'train':
+        td3_pytorch(env_fn,
+                    ac_kwargs={
+                        'hidden_sizes': (256, 256 * 4, 256),
+                        'activation': nn.SiLU,
+                    },
+                    steps_per_epoch=args.steps_per_epoch,
+                    epochs=args.epochs,
+                    seed=args.seed,
+                    replay_size=args.replay_size,
+                    gamma=args.gamma,
+                    polyak=args.polyak,
+                    pi_lr=args.plr,
+                    q_lr=args.qlr,
+                    policy_delay=args.policy_delay,
+                    batch_size=args.batch_size,
+                    eps_decay=args.eps_decay,
+                    warmup=args.warmup,
+                    update_every=args.update_every,
+                    num_test_episodes=args.validate_episodes,
+                    max_ep_len=args.max_episode_length,
+                    logger_kwargs={'output_dir': args.log_dir})
+    else:
+        test_td3_pytorch(env_fn=env_fn,
+                         resume=args.resume,
+                         ac_kwargs={
+                             'hidden_sizes': (256, 256 * 4, 256),
+                             'activation': nn.SiLU,
+                         })
 
 
 if __name__ == '__main__':

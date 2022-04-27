@@ -18,10 +18,10 @@ def main():
     for i in range(10000):
         env.render()
         observation, reward, done, info = env.step(env.action_space.sample())
-        # if done:
-        #     print(i, reward, done)
-        #     print(info['score/success'])
-        #     break
+        if done:
+            print(i, reward, done)
+            print(info)
+            break
 
     env.close()
 

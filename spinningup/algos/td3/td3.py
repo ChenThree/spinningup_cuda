@@ -50,6 +50,39 @@ class ReplayBuffer:
         }
 
 
+def test_td3_pytorch(env_fn,
+                     resume,
+                     actor_critic=MLPActorCritic,
+                     ac_kwargs=dict()):
+    # prepare test env
+    env = env_fn()
+    act_limit = env.action_space.high[0]
+    # load checkpoint
+    ac = actor_critic(env.observation_space, env.action_space, **ac_kwargs)
+    state_dict = torch.load(resume)['state_dict']
+    ac.load_state_dict(state_dict)
+    ac.eval()
+
+    # test
+    def get_action(o):
+        with torch.no_grad():
+            a = ac.act(torch.as_tensor(o, dtype=torch.float32).cuda())
+        return np.clip(a, -act_limit, act_limit)
+
+    with torch.no_grad():
+        o, d, ep_ret, ep_len = env.reset(), False, 0, 0
+        while not d:
+            # Take deterministic actions at test time (noise_scale=0)
+            env.render()
+            o, r, d, info = env.step(get_action(o))
+            ep_ret += r
+            ep_len += 1
+        # success rate for robel
+        print(
+            f'ep_len == {ep_len}  result == {info["score/success"]}  reward == {ep_ret}',
+        )
+
+
 def td3(env_fn,
         actor_critic=MLPActorCritic,
         ac_kwargs=dict(),
@@ -71,7 +104,7 @@ def td3(env_fn,
         num_test_episodes=10,
         max_ep_len=1000,
         logger_kwargs=dict(),
-        save_freq=1):
+        save_freq=10):
     """
     Twin Delayed Deep Deterministic Policy Gradient (TD3)
 
@@ -384,7 +417,7 @@ def td3(env_fn,
 
             # Save model
             if (epoch % save_freq == 0) or (epoch == epochs):
-                logger.save_state({'env': env}, t)
+                logger.save_state({'env': env}, epoch)
 
             # Test the performance of the deterministic version of the agent.
             test_agent()

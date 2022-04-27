@@ -9,6 +9,6 @@ python main_td3.py \
 --epochs 500 \
 --steps-per-epoch 10000 \
 --warmup 50000 \
---random-steps 100000 \
+--eps-decay 200000 \
 --update-every 50 \
 --validate-episodes 100
