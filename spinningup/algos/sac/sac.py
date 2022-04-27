@@ -49,6 +49,37 @@ class ReplayBuffer:
         }
 
 
+def test_sac_pytorch(env_fn,
+                     resume,
+                     actor_critic=MLPActorCritic,
+                     ac_kwargs=dict()):
+    # prepare test env
+    env = env_fn()
+    act_limit = env.action_space.high[0]
+    # load checkpoint
+    ac = actor_critic(env.observation_space, env.action_space, **ac_kwargs)
+    state_dict = torch.load(resume)['state_dict']
+    ac.load_state_dict(state_dict)
+    ac.eval()
+
+    # test
+    def get_action(o):
+        return ac.act(torch.as_tensor(o, dtype=torch.float32).cuda(), True)
+
+    with torch.no_grad():
+        o, d, ep_ret, ep_len = env.reset(), False, 0, 0
+        while not d:
+            # Take deterministic actions at test time (noise_scale=0)
+            env.render()
+            o, r, d, info = env.step(get_action(o))
+            ep_ret += r
+            ep_len += 1
+        # success rate for robel
+        print(
+            f'ep_len == {ep_len}  result == {info["score/success"]}  reward == {ep_ret}',
+        )
+
+
 def sac(env_fn,
         actor_critic=MLPActorCritic,
         ac_kwargs=dict(),
