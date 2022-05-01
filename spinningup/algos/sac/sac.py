@@ -9,6 +9,8 @@ import torch
 from torch.optim import Adam
 
 from ...utils.logx import EpochLogger
+from ...utils.mpi_pytorch import mpi_avg_grads, setup_pytorch_for_mpi, sync_params
+from ...utils.mpi_tools import mpi_avg, mpi_fork, mpi_statistics_scalar, num_procs, proc_id
 from .core import *
 
 
@@ -195,10 +197,14 @@ def sac(env_fn,
             the current policy and value function.
 
     """
+    # Special function to avoid certain slowdowns from PyTorch + MPI combo.
+    setup_pytorch_for_mpi()
 
     logger = EpochLogger(**logger_kwargs)
     logger.save_config(locals())
 
+    # Random seed
+    seed += 10000 * proc_id()
     torch.manual_seed(seed)
     np.random.seed(seed)
 
@@ -212,6 +218,10 @@ def sac(env_fn,
     # Create actor-critic module and target networks
     ac = actor_critic(env.observation_space, env.action_space, **ac_kwargs)
     ac_targ = deepcopy(ac)
+
+    # Sync params across processes
+    sync_params(ac)
+    sync_params(ac_targ)
 
     # Freeze target networks with respect to optimizers (only update via polyak averaging)
     for p in ac_targ.parameters():
@@ -288,7 +298,9 @@ def sac(env_fn,
         q_optimizer.zero_grad()
         loss_q, q_info = compute_loss_q(data)
         loss_q.backward()
-
+        # average grads across MPI processes
+        mpi_avg_grads(ac.q1)
+        mpi_avg_grads(ac.q2)
         # clamp grad
         for param in q_params:
             if param.grad is not None:
@@ -308,7 +320,8 @@ def sac(env_fn,
         pi_optimizer.zero_grad()
         loss_pi, pi_info = compute_loss_pi(data)
         loss_pi.backward()
-
+        # average grads across MPI processes
+        mpi_avg_grads(ac.pi)
         # clamp grad
         for param in ac.pi.parameters():
             if param.grad is not None:

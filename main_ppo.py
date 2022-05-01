@@ -51,6 +51,10 @@ def args_parser():
                         default=None,
                         type=str,
                         help='Resuming model path for testing')
+    parser.add_argument('--log-dir',
+                        default='./logs-ppo',
+                        type=str,
+                        help='log dir')
     return parser.parse_args()
 
 
@@ -77,7 +81,7 @@ def main():
                 pi_lr=args.plr,
                 vf_lr=args.vflr,
                 max_ep_len=args.max_episode_length,
-                logger_kwargs={'output_dir': './logs-ppo'})
+                logger_kwargs={'output_dir': args.log_dir})
 
 
 if __name__ == '__main__':

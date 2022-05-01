@@ -1,5 +1,5 @@
 python main_ddpg.py \
---cpu 2 \
+--cpu 4 \
 --batch-size 1024 \
 --plr 0.0001 \
 --qlr 0.001 \
