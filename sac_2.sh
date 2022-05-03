@@ -1,7 +1,7 @@
 python main_sac.py \
 --env DKittyWalkRandom-v0 \
 --log-dir ./logs-sac-walk \
---cpu 2 \
+--cpu 1 \
 --batch-size 1024 \
 --lr 0.001 \
 --alpha 0.2 \

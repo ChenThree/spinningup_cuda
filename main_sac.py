@@ -29,10 +29,13 @@ def args_parser():
                         default=0.001,
                         type=float,
                         help='learning rate for both policy and value learning')
-    parser.add_argument('--alpha',
-                        default=0.2,
-                        type=float,
-                        help='entropy regularization coefficient')
+    parser.add_argument(
+        '--alpha',
+        default=None,
+        type=float,
+        help=
+        'entropy regularization coefficient, None means learn alpha automatically'
+    )
     parser.add_argument('--gamma', default=0.99, type=float, help='')
     parser.add_argument('--batch-size',
                         default=1024,

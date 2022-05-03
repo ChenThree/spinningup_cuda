@@ -197,6 +197,10 @@ def sac(env_fn,
             the current policy and value function.
 
     """
+    # change warmup to several epoch, avoid log error
+    if warmup % steps_per_epoch != 0:
+        warmup = (warmup // steps_per_epoch + 1) * steps_per_epoch
+
     # Special function to avoid certain slowdowns from PyTorch + MPI combo.
     setup_pytorch_for_mpi()
 
@@ -274,6 +278,21 @@ def sac(env_fn,
     def compute_loss_pi(data):
         o = data['obs'].cuda()
         pi, logp_pi = ac.pi(o)
+
+        # comput alpha loss
+        alpha_loss = None
+        if alpha_optimizer is not None:
+            # Important: detach the variable from the graph
+            # so we don't change it with other losses
+            # see https://github.com/rail-berkeley/softlearning/issues/60
+            alpha = torch.exp(log_alpha.detach())
+            alpha_loss = -(log_alpha *
+                           (logp_pi + target_entropy).detach()).mean()
+            alpha_optimizer.zero_grad()
+            alpha_loss.backward()
+            alpha_optimizer.step()
+            logger.store(Alpha=alpha.cpu().item())
+
         q1_pi = ac.q1(o, pi)
         q2_pi = ac.q2(o, pi)
         q_pi = torch.min(q1_pi, q2_pi)
@@ -289,6 +308,14 @@ def sac(env_fn,
     # Set up optimizers for policy and q-function
     pi_optimizer = Adam(ac.pi.parameters(), lr=lr)
     q_optimizer = Adam(q_params, lr=lr)
+
+    # alpha optimizer
+    target_entropy = -np.prod(env.action_space.shape)
+    alpha_optimizer = None
+    if alpha is None:
+        log_alpha = torch.log(torch.ones(1).cuda()).requires_grad_(True)
+        alpha = torch.exp(log_alpha.detach())
+        alpha_optimizer = Adam([log_alpha], lr=lr)
 
     # Set up model saving
     logger.setup_pytorch_saver(ac)
@@ -410,6 +437,8 @@ def sac(env_fn,
                     update(data=batch)
         else:
             logger.store(LossQ=0, LossPi=0, LogPi=0, Q1Vals=0, Q2Vals=0)
+            if alpha_optimizer is not None:
+                logger.store(Alpha=alpha.cpu().item())
 
         # End of epoch handling
         if (t + 1) % steps_per_epoch == 0:
@@ -431,6 +460,8 @@ def sac(env_fn,
             logger.log_tabular('EpLen', average_only=True)
             logger.log_tabular('TestEpLen', average_only=True)
             logger.log_tabular('TotalEnvInteracts', t)
+            if alpha_optimizer is not None:
+                logger.log_tabular('Alpha', average_only=True)
             logger.log_tabular('Q1Vals', with_min_and_max=True)
             logger.log_tabular('Q2Vals', with_min_and_max=True)
             logger.log_tabular('LogPi', with_min_and_max=True)

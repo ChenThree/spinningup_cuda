@@ -1,6 +1,7 @@
 python main_sac.py \
---cpu 2 \
---batch-size 1024 \
+--log-dir ./logs-sac-stand-lr-0.001-bs-512-a-0.2-pol-0.995 \
+--cpu 1 \
+--batch-size 512 \
 --lr 0.001 \
 --alpha 0.2 \
 --polyak 0.995 \
@@ -9,4 +10,4 @@ python main_sac.py \
 --warmup 10000 \
 --random-steps 100000 \
 --update-every 50 \
---validate-episodes 100
+--validate-episodes 100 \
