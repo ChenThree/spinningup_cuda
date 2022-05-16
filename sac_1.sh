@@ -1,13 +1,14 @@
 python main_sac.py \
---log-dir ./logs-sac-stand-lr-0.001-bs-512-a-0.2-pol-0.995 \
+--log-dir ./logs-sac-stand-lr-0.001-bs-512-a-auto-pol-0.995 \
+--gpu-ids 0 \
 --cpu 1 \
 --batch-size 512 \
 --lr 0.001 \
---alpha 0.2 \
+--reward-scale 0.2 \
 --polyak 0.995 \
 --epochs 100 \
 --steps-per-epoch 10000 \
 --warmup 10000 \
---random-steps 100000 \
+--random-steps 50000 \
 --update-every 50 \
 --validate-episodes 100 \

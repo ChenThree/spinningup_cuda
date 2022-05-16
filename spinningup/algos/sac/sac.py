@@ -92,6 +92,8 @@ def sac(env_fn,
         gamma=0.99,
         polyak=0.995,
         lr=1e-3,
+        lr_decay=False,
+        reward_scale=1,
         alpha=0.2,
         batch_size=100,
         random_steps=10000,
@@ -313,12 +315,16 @@ def sac(env_fn,
     target_entropy = -np.prod(env.action_space.shape)
     alpha_optimizer = None
     if alpha is None:
-        log_alpha = torch.log(torch.ones(1).cuda()).requires_grad_(True)
+        log_alpha = torch.log(torch.ones(1).cuda() * 0.2).requires_grad_(True)
         alpha = torch.exp(log_alpha.detach())
         alpha_optimizer = Adam([log_alpha], lr=lr)
 
     # Set up model saving
     logger.setup_pytorch_saver(ac)
+
+    def update_lr(optimizer, lr):
+        for param_group in optimizer.param_groups:
+            param_group["lr"] = lr
 
     def update(data):
         # First run one gradient descent step for Q1 and Q2
@@ -408,6 +414,10 @@ def sac(env_fn,
 
         # Step the env
         o2, r, d, info = env.step(a)
+
+        # reward scale
+        r *= reward_scale
+
         ep_ret += r
         ep_len += 1
 
@@ -432,8 +442,9 @@ def sac(env_fn,
         # Update handling
         if t >= warmup:
             if t % update_every == 0:
-                for _ in range(update_every):
-                    batch = replay_buffer.sample_batch(batch_size)
+                k = 1 + replay_buffer.size / replay_buffer.max_size
+                for _ in range(int(update_every * k)):
+                    batch = replay_buffer.sample_batch(int(batch_size * k))
                     update(data=batch)
         else:
             logger.store(LossQ=0, LossPi=0, LogPi=0, Q1Vals=0, Q2Vals=0)
@@ -443,6 +454,12 @@ def sac(env_fn,
         # End of epoch handling
         if (t + 1) % steps_per_epoch == 0:
             epoch = (t + 1) // steps_per_epoch
+            # update
+            if lr_decay:
+                new_lr = lr * (1 - epoch / epochs)
+                update_lr(q_optimizer, new_lr)
+                update_lr(pi_optimizer, new_lr)
+                update_lr(alpha_optimizer, new_lr)
 
             # Save model
             if (epoch % save_freq == 0) or (epoch == epochs):

@@ -199,6 +199,9 @@ def td3(env_fn,
             the current policy and value function.
 
     """
+    # change warmup to several epoch, avoid log error
+    if warmup % steps_per_epoch != 0:
+        warmup = (warmup // steps_per_epoch + 1) * steps_per_epoch
 
     logger = EpochLogger(**logger_kwargs)
     logger.save_config(locals())
@@ -286,6 +289,10 @@ def td3(env_fn,
 
     # Set up model saving
     logger.setup_pytorch_saver(ac)
+
+    def update_lr(optimizer, lr):
+        for param_group in optimizer.param_groups:
+            param_group["lr"] = lr
 
     def update(data, timer):
         # First run one gradient descent step for Q1 and Q2
@@ -414,6 +421,11 @@ def td3(env_fn,
         # End of epoch handling
         if (t + 1) % steps_per_epoch == 0:
             epoch = (t + 1) // steps_per_epoch
+            # update lr
+            new_pi_lr = pi_lr * (1 - epoch / epochs)
+            new_q_lr = q_lr * (1 - epoch / epochs)
+            update_lr(q_optimizer, new_q_lr)
+            update_lr(pi_optimizer, new_pi_lr)
 
             # Save model
             if (epoch % save_freq == 0) or (epoch == epochs):

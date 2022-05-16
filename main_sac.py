@@ -29,6 +29,10 @@ def args_parser():
                         default=0.001,
                         type=float,
                         help='learning rate for both policy and value learning')
+    parser.add_argument('--lr-decay',
+                        default=False,
+                        type=bool,
+                        help='learning rate decay for every epoch')
     parser.add_argument(
         '--alpha',
         default=None,
@@ -82,6 +86,10 @@ def args_parser():
                         type=int,
                         help='linear decay of exploration policy')
     parser.add_argument('--noise', default=0.1, type=float, help='train noise')
+    parser.add_argument('--reward-scale',
+                        default=0.1,
+                        type=float,
+                        help='reward scale factor')
     parser.add_argument('--resume',
                         default=None,
                         type=str,
@@ -116,8 +124,8 @@ def main():
         mpi_fork(args.cpu)
         sac_pytorch(env_fn,
                     ac_kwargs={
-                        'hidden_sizes': (256, 256 * 4, 256),
-                        'activation': nn.SiLU,
+                        'hidden_sizes': (128, 128 * 4, 128),
+                        'activation': nn.ReLU,
                     },
                     steps_per_epoch=args.steps_per_epoch,
                     epochs=args.epochs,
@@ -126,6 +134,8 @@ def main():
                     gamma=args.gamma,
                     polyak=args.polyak,
                     lr=args.lr,
+                    lr_decay=args.lr_decay,
+                    reward_scale=args.reward_scale,
                     alpha=args.alpha,
                     batch_size=args.batch_size,
                     random_steps=args.random_steps,

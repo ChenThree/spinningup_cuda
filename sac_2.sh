@@ -1,14 +1,15 @@
 python main_sac.py \
 --env DKittyWalkRandom-v0 \
---log-dir ./logs-sac-walk \
+--log-dir ./logs-sac-walk-lr-0.001-bs-512-a-auto-pol-0.995 \
+--gpu-ids 0 \
 --cpu 1 \
---batch-size 1024 \
+--batch-size 512 \
 --lr 0.001 \
---alpha 0.2 \
 --polyak 0.995 \
 --epochs 500 \
+--replay-size 2000000 \
 --steps-per-epoch 10000 \
---warmup 100000 \
---random-steps 300000 \
+--warmup 10000 \
+--random-steps 100000 \
 --update-every 50 \
---validate-episodes 100
+--validate-episodes 100 \
