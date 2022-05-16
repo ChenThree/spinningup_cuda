@@ -37,6 +37,10 @@ def args_parser():
                         default=0.001,
                         type=float,
                         help='Learning rate for value function optimizer')
+    parser.add_argument('--repeat-times',
+                        default=16,
+                        type=int,
+                        help='Data reuse times')
     parser.add_argument('--gamma', default=0.99, type=float, help='')
     parser.add_argument('--max-episode-length', default=2000, type=int, help='')
     parser.add_argument('--epochs',
@@ -71,8 +75,8 @@ def main():
     # ppo
     ppo_pytorch(env_fn,
                 ac_kwargs={
-                    'hidden_sizes': (256, 256 * 4, 256),
-                    'activation': nn.SiLU,
+                    'hidden_sizes': (128, 128 * 4, 128),
+                    'activation': nn.ReLU,
                 },
                 steps_per_epoch=args.steps_per_epoch,
                 epochs=args.epochs,
@@ -80,6 +84,8 @@ def main():
                 gamma=args.gamma,
                 pi_lr=args.plr,
                 vf_lr=args.vflr,
+                train_pi_iters=args.repeat_times,
+                train_v_iters=args.repeat_times,
                 max_ep_len=args.max_episode_length,
                 logger_kwargs={'output_dir': args.log_dir})
 
