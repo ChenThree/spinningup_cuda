@@ -1,10 +1,12 @@
 python main_ddpg.py \
---cpu 4 \
---batch-size 1024 \
+--env DKittyStandRandom-v0 \
+--log-dir ./logs-ddpg \
+--cpu 2 \
+--batch-size 128 \
 --plr 0.0001 \
 --qlr 0.001 \
 --polyak 0.995 \
---epochs 100 \
+--epochs 200 \
 --steps-per-epoch 10000 \
 --warmup 10000 \
 --eps-decay 200000 \

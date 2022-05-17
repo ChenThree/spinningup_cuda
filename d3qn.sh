@@ -1,4 +1,6 @@
 python main_d3qn.py \
+--env LunarLander-v2 \
+--log-dir ./logs-d3qn \
 --cpu 1 \
 --lr 1e-4 \
 --epochs 100 \
