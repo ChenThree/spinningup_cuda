@@ -87,7 +87,7 @@ def args_parser():
                         help='linear decay of exploration policy')
     parser.add_argument('--noise', default=0.1, type=float, help='train noise')
     parser.add_argument('--reward-scale',
-                        default=0.1,
+                        default=1,
                         type=float,
                         help='reward scale factor')
     parser.add_argument('--resume',

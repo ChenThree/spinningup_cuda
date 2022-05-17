@@ -68,6 +68,7 @@ def ddpg(env_fn,
          update_every=50,
          num_test_episodes=10,
          max_ep_len=1000,
+         loss_criterion=nn.SmoothL1Loss,
          logger_kwargs=dict(),
          save_freq=10):
     """
@@ -174,6 +175,7 @@ def ddpg(env_fn,
                                                  theta=0.15)
 
     # Create actor-critic module and target networks
+    criterion = loss_criterion()
     ac = actor_critic(env.observation_space, env.action_space, **ac_kwargs)
     ac_targ = deepcopy(ac)
 
@@ -206,7 +208,8 @@ def ddpg(env_fn,
             backup = r + gamma * (1 - d) * q_pi_targ
 
         # MSE loss against Bellman backup
-        loss_q = ((q - backup).square()).mean()
+        # loss_q = ((q - backup).square()).mean()
+        loss_q = criterion(q, backup)
 
         # Useful info for logging
         loss_info = dict(QVals=q.detach().cpu().numpy())

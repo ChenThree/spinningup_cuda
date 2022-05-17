@@ -1,14 +1,15 @@
 python main_sac.py \
---log-dir ./logs-sac-stand-lr-0.0001-bs-512-a-auto-pol-0.995 \
+--env DKittyStandRandom-v0 \
+--log-dir ./logs-sac-stand-lr-0.0001-bs-128-a-auto-pol-0.995 \
 --gpu-ids 0 \
 --cpu 1 \
 --batch-size 128 \
 --lr 0.0001 \
---reward-scale 1 \
 --polyak 0.995 \
---epochs 100 \
+--epochs 200 \
+--replay-size 1000000 \
 --steps-per-epoch 10000 \
 --warmup 10000 \
 --random-steps 20000 \
 --update-every 50 \
---validate-episodes 100
+--validate-episodes 100 \
