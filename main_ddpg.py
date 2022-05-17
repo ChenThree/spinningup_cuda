@@ -102,8 +102,8 @@ def main():
     # ddpg
     ddpg_pytorch(env_fn,
                  ac_kwargs={
-                     'hidden_sizes': (256, 256 * 4, 256),
-                     'activation': nn.SiLU,
+                     'hidden_sizes': (128, 128 * 4, 128),
+                     'activation': nn.ReLU,
                  },
                  steps_per_epoch=args.steps_per_epoch,
                  epochs=args.epochs,
