@@ -17,24 +17,32 @@ from .core import *
 os.environ['CUDA_VISIBLE_DEVICES'] = '0'
 
 
-def train(env_fn,
-          dqn_model=MLPDQN,
-          dqn_kwargs=dict(),
-          seed=0,
-          gamma=0.99,
-          min_eps=0.1,
-          eps_decay=1e5,
-          lr=3e-4,
-          loss_criterion=nn.SmoothL1Loss,
-          epochs=100,
-          epoch_per_epoch=10000,
-          replay_size=1000000,
-          batch_size=128,
-          target_update_interval=2000,
-          update_every=10,
-          warmup=5000,
-          save_freq=10,
-          logger_kwargs=dict()):
+def d3qn(env_fn,
+         dqn_model=MLPDoubleDQN,
+         dqn_kwargs=dict(),
+         seed=0,
+         gamma=0.99,
+         min_eps=0.1,
+         eps_decay=10000,
+         lr=1e-4,
+         epochs=100,
+         steps_per_epoch=10000,
+         replay_size=int(1e6),
+         batch_size=128,
+         target_update_interval=2000,
+         update_every=50,
+         num_test_episodes=100,
+         warmup=1000,
+         random_steps=10000,
+         max_ep_len=1000,
+         loss_criterion=nn.SmoothL1Loss,
+         logger_kwargs=dict(),
+         save_freq=10,
+         log_success=False):
+    # change warmup to several epoch, avoid log error
+    if warmup % steps_per_epoch != 0:
+        warmup = (warmup // steps_per_epoch + 1) * steps_per_epoch
+
     # Special function to avoid certain slowdowns from PyTorch + MPI combo.
     setup_pytorch_for_mpi()
 
@@ -47,7 +55,36 @@ def train(env_fn,
     torch.manual_seed(seed)
     np.random.seed(seed)
 
+    # get environment setting
     env, test_env = env_fn(), env_fn()
+    obs_dim = env.observation_space.shape[0]
+    act_dim = env.action_space.n
+    eps_threshold = 1 - min_eps
+    eps_decay = 1 - 1 / eps_decay
+
+    # initialize optimizer
+    criterion = loss_criterion()
+    dqn = dqn_model(env.observation_space, env.action_space, **dqn_kwargs)
+    dqn_targ = deepcopy(dqn)
+    for para in dqn_targ.parameters():
+        para.requires_grad = False
+
+    # Sync params across processes
+    sync_params(dqn)
+    sync_params(dqn_targ)
+
+    # set up optimizer
+    optimizer = Adam(dqn.parameters(), lr=lr)
+
+    # create replay buffer
+    replay_buffer = ReplayBuffer(obs_dim, 1, replay_size)
+
+    # Count variables (protip: try to get a feel for how different size networks behave!)
+    var_counts = tuple(count_vars(module) for module in [dqn])
+    logger.log('\nNumber of parameters: \t dqn: %d\n' % var_counts)
+
+    # Set up model saving
+    logger.setup_pytorch_saver(dqn)
 
     def compute_loss(data):
         o, a, r, o2, d = data['obs'].cuda(), data['act'].cuda(), data['rew'].cuda(), \
@@ -60,100 +97,137 @@ def train(env_fn,
         q1, q2 = dqn(o)
         q1 = q1.gather(1, a).squeeze()
         q2 = q2.gather(1, a).squeeze()
-        # Compute huber error
+        # combine loss
         loss = criterion(q1, q_target) + criterion(q2, q_target)
-        return loss
+        # Useful info for logging
+        loss_info = dict(Q1Vals=q1.detach().cpu().numpy(),
+                         Q2Vals=q2.detach().cpu().numpy())
+        return loss, loss_info
 
-    # get environment setting
-    obs_dim = env.observation_space.shape[0]
-    act_dim = env.action_space.n
-    # define Q target and Q
-    dqn = dqn_model(env.observation_space, env.action_space, **dqn_kwargs)
-    dqn_target = dqn_model(env.observation_space, env.action_space)
-    dqn_target.load_state_dict(dqn.state_dict())
-    for para in dqn_target.parameters():
-        para.requires_grad = False
-    dqn_target.eval()
-    dqn.cuda()
-    dqn_target.cuda()
-    # initialize optimizer
-    optimizer = Adam(dqn.parameters(), lr=lr)
-    criterion = loss_criterion()
-    # create replay buffer
-    memory = ReplayBuffer(obs_dim, 1, replay_size)
-    # Count variables (protip: try to get a feel for how different size networks behave!)
-    var_counts = tuple(count_vars(module) for module in [dqn])
-    logger.log('\nNumber of parameters: \t dqn: %d\n' % var_counts)
-    # train
-    start = time.time()
-    sum_loss = 0
-    obs, reward, done = env.reset(), 0, False
-    max_iter = epochs * epoch_per_epoch
-    for t in range(max_iter):
-        # before learning starts, choose actions randomly
-        if t < warmup:
-            action = np.random.randint(act_dim)
+    def get_action(o, eps):
+        # epsilon greedy exploration
+        if random.random() > min_eps + eps:
+            with torch.no_grad():
+                q = dqn.q1(torch.as_tensor(o, dtype=torch.float32).cuda())
+                action = q.argmax(dim=0).cpu().numpy()
         else:
-            # decay eps
-            eps_threshold = min_eps + (0.9 - min_eps) * math.exp(-t / eps_decay)
-            # epsilon greedy exploration
-            if random.random() > eps_threshold:
-                # get action with max Q
-                obs_t = torch.from_numpy(obs[np.newaxis, :]).cuda()
-                action = dqn.get_action(obs_t).squeeze().cpu().numpy()
-            else:
-                action = np.random.randint(act_dim)
-        # take action and get reward, clipping to [0, 1]
-        obs2, reward, done, _ = env.step(action)
-        # store effect of action
-        memory.store(obs, action, reward, obs2, done)
-        obs = obs2
-        # reset env if reached episode boundary
-        if done:
-            obs, reward, done = env.reset(), 0, False
-        # update network only reach learn_interval
-        if t < warmup or t % update_every != 0:
-            continue
-        # set train mode
-        dqn.train()
-        update_times = int(update_every * (1 + memory.size / memory.max_size))
-        for i in range(update_times):
-            # sample batch from replay buffer
-            data = memory.sample_batch(batch_size)
-            # calculate loss
-            loss = compute_loss(data)
-            sum_loss += loss.data.cpu().numpy()
-            # backward
-            optimizer.zero_grad()
-            loss.backward()
-            # clamp grad
-            for param in dqn.parameters():
+            action = env.action_space.sample()
+        return action
+
+    def update(data):
+        optimizer.zero_grad()
+        # calculate loss
+        loss, loss_info = compute_loss(data)
+        loss.backward()
+        # average grads across MPI processes
+        mpi_avg_grads(dqn)
+        # clamp grad
+        for param in dqn.parameters():
+            if param.grad is not None:
                 param.grad.data.clamp_(-1, 1)
-            optimizer.step()
+
+        optimizer.step()
+
+        # Record things
+        logger.store(Loss=loss.item(), **loss_info)
+
+    def test_agent():
+        dqn.eval()
+        with torch.no_grad():
+            for _ in range(num_test_episodes):
+                o, d, ep_ret, ep_len = test_env.reset(), False, 0, 0
+                while not (d or (ep_len == max_ep_len)):
+                    # Take deterministic actions at test time (noise_scale=0)
+                    o, r, d, info = test_env.step(get_action(o, 0))
+                    ep_ret += r
+                    ep_len += 1
+                # success rate
+                if log_success:
+                    logger.store(TestSuccess=int(info['score/success']))
+                logger.store(TestEpRet=ep_ret, TestEpLen=ep_len)
+        dqn.train()
+
+    # train
+    total_steps = epochs * steps_per_epoch
+    start_time = time.time()
+    o, ep_ret, ep_len = env.reset(), 0, 0
+
+    for t in range(total_steps):
+        # before learning starts, choose actions randomly
+        if t <= random_steps:
+            a = env.action_space.sample()
+        else:
+            # get action
+            a = get_action(o, eps_threshold)
+            # decay eps
+            logger.store(Eps=eps_threshold + min_eps)
+            eps_threshold *= eps_decay
+
+        # Step the env
+        o2, r, d, info = env.step(a)
+        ep_ret += r
+        ep_len += 1
+
+        # consider max episode as done
+        if ep_len == max_ep_len:
+            d = True
+
+        # store experience
+        replay_buffer.store(o, a, r, o2, d)
+        o = o2
+
+        # End of trajectory handling
+        if d:
+            logger.store(EpRet=ep_ret, EpLen=ep_len)
+            # success rate for robel
+            if log_success:
+                logger.store(Success=int(info['score/success']))
+            o, ep_ret, ep_len = env.reset(), 0, 0
+
+        # update network only reach learn_interval
+        if t >= warmup:
+            if t % update_every == 0:
+                # adjust update times according to buffer size
+                k = 1 + replay_buffer.size / replay_buffer.max_size
+                for _ in range(int(update_every * k)):
+                    # sample batch from replay buffer
+                    batch = replay_buffer.sample_batch(int(batch_size * k))
+                    # update network
+                    update(batch)
+        else:
+            logger.store(Loss=0, Q1Vals=0, Q2Vals=0)
 
         # update target Q network weights with current Q network weights
         if t % target_update_interval == 0:
-            dqn_target.load_state_dict(dqn.state_dict())
-        # log
-        if t > 0 and t % epoch_per_epoch == 0:
-            # write log
-            log_str = 'iter == {}  time == {:.3f} s  err == {:.5f}\n'.format(
-                t,
-                time.time() - start, sum_loss / epoch_per_epoch)
-            sum_loss = 0
-            log_str += log_trainning_info(dqn, test_env, lr, 100)
-            logger.log(log_str)
-            start = time.time()
-            # save checkpoint
-            if t % (save_freq * epoch_per_epoch) == 0:
-                if not os.path.exists('./checkpoint'):
-                    os.makedirs('./checkpoint')
-                torch.save(
-                    {
-                        'iter': t,
-                        'state_dict': dqn.state_dict(),
-                        'optimizer': optimizer.state_dict()
-                    }, '{}/checkpoint_{}.pth'.format('./checkpoint', t))
+            dqn_targ.load_state_dict(dqn.state_dict())
+
+        # End of epoch handling
+        if (t + 1) % steps_per_epoch == 0:
+            epoch = (t + 1) // steps_per_epoch
+
+            # Save model
+            if (epoch % save_freq == 0) or (epoch == epochs):
+                logger.save_state({'env': env}, epoch)
+
+            # Test the performance of the deterministic version of the agent.
+            test_agent()
+
+            # Log info about epoch
+            logger.log_tabular('Epoch', epoch)
+            logger.log_tabular('EpRet', with_min_and_max=True)
+            if log_success:
+                logger.log_tabular('Success', average_only=True)
+            logger.log_tabular('TestEpRet', with_min_and_max=True)
+            if log_success:
+                logger.log_tabular('TestSuccess', average_only=True)
+            logger.log_tabular('EpLen', average_only=True)
+            logger.log_tabular('TestEpLen', average_only=True)
+            logger.log_tabular('TotalEnvInteracts', t)
+            logger.log_tabular('Q1Vals', with_min_and_max=True)
+            logger.log_tabular('Q2Vals', with_min_and_max=True)
+            logger.log_tabular('Loss', average_only=True)
+            logger.log_tabular('Time', time.time() - start_time)
+            logger.dump_tabular()
 
 
 def log_trainning_info(dqn, env, lr, test_count):
@@ -188,12 +262,3 @@ def test(env, Q, plot_figure):
             if done:
                 break
     return score
-
-
-def main():
-    train(lambda: gym.make('Acrobot-v1'),
-          logger_kwargs={'output_dir': './logs-ddpg'})
-
-
-if __name__ == '__main__':
-    main()

@@ -38,11 +38,11 @@ def args_parser():
                         type=float,
                         help='Learning rate for value function optimizer')
     parser.add_argument('--repeat-times',
-                        default=16,
+                        default=40,
                         type=int,
                         help='Data reuse times')
     parser.add_argument('--gamma', default=0.99, type=float, help='')
-    parser.add_argument('--max-episode-length', default=2000, type=int, help='')
+    parser.add_argument('--max-episode-length', default=1000, type=int, help='')
     parser.add_argument('--epochs',
                         default=100,
                         type=int,
@@ -87,7 +87,8 @@ def main():
                 train_pi_iters=args.repeat_times,
                 train_v_iters=args.repeat_times,
                 max_ep_len=args.max_episode_length,
-                logger_kwargs={'output_dir': args.log_dir})
+                logger_kwargs={'output_dir': args.log_dir},
+                log_success=True)
 
 
 if __name__ == '__main__':

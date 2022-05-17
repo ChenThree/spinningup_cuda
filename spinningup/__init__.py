@@ -1,4 +1,5 @@
 # Algorithms
+from .algos.d3qn.d3qn import d3qn as d3qn_pytorch
 from .algos.ddpg.ddpg import ddpg as ddpg_pytorch
 from .algos.ppo.ppo import ppo as ppo_pytorch
 from .algos.sac.sac import sac as sac_pytorch

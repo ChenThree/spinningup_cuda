@@ -62,15 +62,16 @@ def ddpg(env_fn,
          polyak=0.995,
          pi_lr=1e-3,
          q_lr=1e-3,
-         batch_size=100,
+         batch_size=128,
          eps_decay=10000,
          warmup=1000,
          update_every=50,
-         num_test_episodes=10,
+         num_test_episodes=100,
          max_ep_len=1000,
          loss_criterion=nn.SmoothL1Loss,
          logger_kwargs=dict(),
-         save_freq=10):
+         save_freq=10,
+         log_success=False):
     """
     Deep Deterministic Policy Gradient (DDPG)
 
@@ -151,6 +152,10 @@ def ddpg(env_fn,
             the current policy and value function.
 
     """
+    # change warmup to several epoch, avoid log error
+    if warmup % steps_per_epoch != 0:
+        warmup = (warmup // steps_per_epoch + 1) * steps_per_epoch
+
     # Special function to avoid certain slowdowns from PyTorch + MPI combo.
     setup_pytorch_for_mpi()
 
@@ -178,14 +183,16 @@ def ddpg(env_fn,
     criterion = loss_criterion()
     ac = actor_critic(env.observation_space, env.action_space, **ac_kwargs)
     ac_targ = deepcopy(ac)
+    for p in ac_targ.parameters():
+        p.requires_grad = False
 
     # Sync params across processes
     sync_params(ac)
     sync_params(ac_targ)
 
-    # Freeze target networks with respect to optimizers (only update via polyak averaging)
-    for p in ac_targ.parameters():
-        p.requires_grad = False
+    # Set up optimizers for policy and q-function
+    pi_optimizer = Adam(ac.pi.parameters(), lr=pi_lr)
+    q_optimizer = Adam(ac.q.parameters(), lr=q_lr)
 
     # Experience buffer
     replay_buffer = ReplayBuffer(obs_dim=obs_dim,
@@ -195,6 +202,9 @@ def ddpg(env_fn,
     # Count variables (protip: try to get a feel for how different size networks behave!)
     var_counts = tuple(count_vars(module) for module in [ac.pi, ac.q])
     logger.log('\nNumber of parameters: \t pi: %d, \t q: %d\n' % var_counts)
+
+    # Set up model saving
+    logger.setup_pytorch_saver(ac)
 
     # Set up function for computing DDPG Q-loss
     def compute_loss_q(data):
@@ -221,13 +231,6 @@ def ddpg(env_fn,
         o = data['obs'].cuda()
         q_pi = ac.q(o, ac.pi(o))
         return -q_pi.mean()
-
-    # Set up optimizers for policy and q-function
-    pi_optimizer = Adam(ac.pi.parameters(), lr=pi_lr)
-    q_optimizer = Adam(ac.q.parameters(), lr=q_lr)
-
-    # Set up model saving
-    logger.setup_pytorch_saver(ac)
 
     def update(data):
         # First run one gradient descent step for Q.
@@ -283,7 +286,7 @@ def ddpg(env_fn,
     def test_agent():
         ac.eval()
         with torch.no_grad():
-            for j in range(num_test_episodes):
+            for _ in range(num_test_episodes):
                 o, d, ep_ret, ep_len = test_env.reset(), False, 0, 0
                 noise_process.reset()
                 while not (d or (ep_len == max_ep_len)):
@@ -293,7 +296,8 @@ def ddpg(env_fn,
                     ep_ret += r
                     ep_len += 1
                 # success rate
-                logger.store(TestSuccess=int(info['score/success']))
+                if log_success:
+                    logger.store(TestSuccess=int(info['score/success']))
                 logger.store(TestEpRet=ep_ret, TestEpLen=ep_len)
         ac.train()
 
@@ -336,7 +340,8 @@ def ddpg(env_fn,
         if d:
             logger.store(EpRet=ep_ret, EpLen=ep_len)
             # success rate for robel
-            logger.store(Success=int(info['score/success']))
+            if log_success:
+                logger.store(Success=int(info['score/success']))
             o, ep_ret, ep_len = env.reset(), 0, 0
             noise_process.reset()
 
@@ -363,9 +368,11 @@ def ddpg(env_fn,
             # Log info about epoch
             logger.log_tabular('Epoch', epoch)
             logger.log_tabular('EpRet', with_min_and_max=True)
-            logger.log_tabular('Success', average_only=True)
+            if log_success:
+                logger.log_tabular('Success', average_only=True)
             logger.log_tabular('TestEpRet', with_min_and_max=True)
-            logger.log_tabular('TestSuccess', average_only=True)
+            if log_success:
+                logger.log_tabular('TestSuccess', average_only=True)
             logger.log_tabular('EpLen', average_only=True)
             logger.log_tabular('TestEpLen', average_only=True)
             logger.log_tabular('TotalEnvInteracts', t)

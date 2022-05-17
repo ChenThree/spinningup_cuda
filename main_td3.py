@@ -33,7 +33,7 @@ def args_parser():
                         help='Q-networks learning rate')
     parser.add_argument('--gamma', default=0.99, type=float, help='')
     parser.add_argument('--batch-size',
-                        default=1024,
+                        default=128,
                         type=int,
                         help='minibatch size')
     parser.add_argument('--replay-size',
@@ -56,21 +56,21 @@ def args_parser():
         default=100,
         type=int,
         help='how many episode to perform during validate experiment')
-    parser.add_argument('--max-episode-length', default=2000, type=int, help='')
+    parser.add_argument('--max-episode-length', default=1000, type=int, help='')
     parser.add_argument('--epochs',
                         default=100,
                         type=int,
                         help='train iters each timestep')
     parser.add_argument(
         '--warmup',
-        default=5000,
+        default=1000,
         type=int,
         help=
         'Number of env interactions to collect before starting to do gradient descent updates'
     )
     parser.add_argument(
         '--update-every',
-        default=10,
+        default=50,
         type=int,
         help=
         'Number of env interactions that should elapse between gradient descent updates'
@@ -133,7 +133,8 @@ def main():
                     update_every=args.update_every,
                     num_test_episodes=args.validate_episodes,
                     max_ep_len=args.max_episode_length,
-                    logger_kwargs={'output_dir': args.log_dir})
+                    logger_kwargs={'output_dir': args.log_dir},
+                    log_success=True)
     else:
         test_td3_pytorch(env_fn=env_fn,
                          resume=args.resume,

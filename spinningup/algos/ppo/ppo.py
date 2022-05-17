@@ -109,7 +109,8 @@ def ppo(env_fn,
         max_ep_len=1000,
         target_kl=0.01,
         logger_kwargs=dict(),
-        save_freq=10):
+        save_freq=10,
+        log_success=False):
     """
     Proximal Policy Optimization (by clipping),
 
@@ -367,7 +368,8 @@ def ppo(env_fn,
                 if terminal:
                     # only save EpRet / EpLen if trajectory finished
                     logger.store(EpRet=ep_ret, EpLen=ep_len)
-                    logger.store(Success=int(info['score/success']))
+                    if log_success:
+                        logger.store(Success=int(info['score/success']))
                 o, ep_ret, ep_len = env.reset(), 0, 0
 
         # Save model
@@ -380,7 +382,8 @@ def ppo(env_fn,
         # Log info about epoch
         logger.log_tabular('Epoch', epoch)
         logger.log_tabular('EpRet', with_min_and_max=True)
-        logger.log_tabular('Success', average_only=True)
+        if log_success:
+            logger.log_tabular('Success', average_only=True)
         logger.log_tabular('EpLen', average_only=True)
         logger.log_tabular('VVals', with_min_and_max=True)
         logger.log_tabular('TotalEnvInteracts', (epoch + 1) * steps_per_epoch)
