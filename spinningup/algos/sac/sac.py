@@ -101,6 +101,7 @@ def sac(env_fn,
         update_every=50,
         num_test_episodes=10,
         max_ep_len=1000,
+        loss_criterion=nn.SmoothL1Loss,
         logger_kwargs=dict(),
         save_freq=10):
     """
@@ -222,6 +223,7 @@ def sac(env_fn,
     act_limit = env.action_space.high[0]
 
     # Create actor-critic module and target networks
+    criterion = loss_criterion()
     ac = actor_critic(env.observation_space, env.action_space, **ac_kwargs)
     ac_targ = deepcopy(ac)
 
@@ -266,8 +268,10 @@ def sac(env_fn,
             backup = r + gamma * (1 - d) * (q_pi_targ - alpha * logp_a2)
 
         # MSE loss against Bellman backup
-        loss_q1 = ((q1 - backup).square()).mean()
-        loss_q2 = ((q2 - backup).square()).mean()
+        # loss_q1 = ((q1 - backup).square()).mean()
+        # loss_q2 = ((q2 - backup).square()).mean()
+        loss_q1 = criterion(q1, backup)
+        loss_q2 = criterion(q2, backup)
         loss_q = loss_q1 + loss_q2
 
         # Useful info for logging
@@ -287,12 +291,12 @@ def sac(env_fn,
             # Important: detach the variable from the graph
             # so we don't change it with other losses
             # see https://github.com/rail-berkeley/softlearning/issues/60
-            alpha = torch.exp(log_alpha.detach())
             alpha_loss = -(log_alpha *
                            (logp_pi + target_entropy).detach()).mean()
             alpha_optimizer.zero_grad()
             alpha_loss.backward()
             alpha_optimizer.step()
+            alpha = log_alpha.detach().exp()
             logger.store(Alpha=alpha.cpu().item())
 
         q1_pi = ac.q1(o, pi)
@@ -315,7 +319,7 @@ def sac(env_fn,
     target_entropy = -np.prod(env.action_space.shape)
     alpha_optimizer = None
     if alpha is None:
-        log_alpha = torch.log(torch.ones(1).cuda() * 0.2).requires_grad_(True)
+        log_alpha = torch.log(torch.ones(1).cuda() * 1).requires_grad_(True)
         alpha = torch.exp(log_alpha.detach())
         alpha_optimizer = Adam([log_alpha], lr=lr)
 

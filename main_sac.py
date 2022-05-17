@@ -148,8 +148,8 @@ def main():
         test_sac_pytorch(env_fn=env_fn,
                          resume=args.resume,
                          ac_kwargs={
-                             'hidden_sizes': (256, 256 * 4, 256),
-                             'activation': nn.SiLU,
+                             'hidden_sizes': (128, 128 * 4, 128),
+                             'activation': nn.ReLU,
                          })
 
 

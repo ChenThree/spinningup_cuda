@@ -103,6 +103,7 @@ def td3(env_fn,
         policy_delay=2,
         num_test_episodes=10,
         max_ep_len=1000,
+        loss_criterion=nn.SmoothL1Loss,
         logger_kwargs=dict(),
         save_freq=10):
     """
@@ -222,6 +223,7 @@ def td3(env_fn,
                                                  theta=0.15)
 
     # Create actor-critic module and target networks
+    criterion = loss_criterion()
     ac = actor_critic(env.observation_space, env.action_space, **ac_kwargs)
     ac_targ = deepcopy(ac)
 
@@ -267,8 +269,10 @@ def td3(env_fn,
             backup = r + gamma * (1 - d) * q_pi_targ
 
         # MSE loss against Bellman backup
-        loss_q1 = ((q1 - backup).square()).mean()
-        loss_q2 = ((q2 - backup).square()).mean()
+        # loss_q1 = ((q1 - backup).square()).mean()
+        # loss_q2 = ((q2 - backup).square()).mean()
+        loss_q1 = criterion(q1, backup)
+        loss_q2 = criterion(q2, backup)
         loss_q = loss_q1 + loss_q2
 
         # Useful info for logging
