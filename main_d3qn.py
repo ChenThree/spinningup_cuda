@@ -100,7 +100,7 @@ def main():
     mpi_fork(args.cpu)
     # ddpg
     d3qn_pytorch(env_fn,
-                 ac_kwargs={
+                 dqn_kwargs={
                      'hidden_sizes': (128, 128 * 4, 128),
                      'activation': nn.ReLU,
                  },
@@ -120,7 +120,7 @@ def main():
                  max_ep_len=args.max_episode_length,
                  loss_criterion=nn.SmoothL1Loss,
                  logger_kwargs={'output_dir': './logs-d3qn'},
-                 log_success=True)
+                 log_success=False)
 
 
 if __name__ == '__main__':

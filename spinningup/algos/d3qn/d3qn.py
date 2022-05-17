@@ -61,6 +61,7 @@ def d3qn(env_fn,
     act_dim = env.action_space.n
     eps_threshold = 1 - min_eps
     eps_decay = 1 - 1 / eps_decay
+    logger.store(Eps=eps_threshold + min_eps)
 
     # initialize optimizer
     criterion = loss_criterion()
@@ -226,6 +227,7 @@ def d3qn(env_fn,
             logger.log_tabular('Q1Vals', with_min_and_max=True)
             logger.log_tabular('Q2Vals', with_min_and_max=True)
             logger.log_tabular('Loss', average_only=True)
+            logger.log_tabular('Eps', average_only=True)
             logger.log_tabular('Time', time.time() - start_time)
             logger.dump_tabular()
 
