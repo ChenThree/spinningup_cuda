@@ -1,0 +1,14 @@
+python main_td3.py \
+--env DKittyStandRandom-v0 \
+--log-dir ./logs-td3-stand-lr-0.001-bs-128-delay-2 \
+--batch-size 128 \
+--plr 0.001 \
+--qlr 0.001 \
+--policy-delay 2 \
+--polyak 0.995 \
+--epochs 200 \
+--steps-per-epoch 10000 \
+--warmup 10000 \
+--eps-decay 200000 \
+--update-every 50 \
+--validate-episodes 100
