@@ -1,5 +1,5 @@
 # spinningup_cuda
-Mainly following OPENAI [Spinning up repo](https://github.com/openai/spinningup)
+Mainly following [OPENAI Spinningup](https://github.com/openai/spinningup)
 
 # Main Upgrades
 + Pytorch cuda support
