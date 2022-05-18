@@ -446,6 +446,7 @@ def sac(env_fn,
         # Update handling
         if t >= warmup:
             if t % update_every == 0:
+                # adjust update times according to buffer size
                 k = 1 + replay_buffer.size / replay_buffer.max_size
                 for _ in range(int(update_every * k)):
                     batch = replay_buffer.sample_batch(int(batch_size * k))

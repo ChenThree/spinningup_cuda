@@ -104,12 +104,18 @@ class MLPDoubleDQN(BaseModule):
         features = self.features(x)
         return self.q1(features), self.q2(features)
 
-    def get_action(self, o):
+    def get_action(self, o, eps):
+        # using single network to choose action
         with torch.no_grad():
             q = self.q1(
                 self.features(torch.as_tensor(o, dtype=torch.float32).cuda()))
-            action = q.argmax(dim=0).cpu().numpy()
-        return action
+        # eps exploration
+        if random.random() > eps:
+            action = q.argmax(dim=0)
+        else:
+            action_prob = F.softmax(q, dim=0)
+            action = torch.multinomial(action_prob, num_samples=1).squeeze()
+        return action.cpu().numpy()
 
 
 # D3QN

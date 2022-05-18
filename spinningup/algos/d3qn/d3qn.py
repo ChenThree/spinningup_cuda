@@ -28,7 +28,7 @@ def d3qn(env_fn,
          replay_size=int(1e6),
          batch_size=128,
          target_update_interval=2000,
-         polyak=0.995,
+         polyak=None,
          update_every=50,
          num_test_episodes=100,
          warmup=1000,
@@ -87,12 +87,13 @@ def d3qn(env_fn,
     logger.setup_pytorch_saver(dqn)
 
     def compute_loss(data):
-        o, a, r, o2, d = data['obs'].cuda(), data['act'].cuda(), data['rew'].cuda(), \
-            data['obs2'].cuda(), data['done'].cuda()
-        # get the Q values for best actions in next_obs, using the smaller one
-        q_next = torch.min(*dqn(o2)).max(1)[0]
-        # cal target q_s_a
-        q_target = r + gamma * (1 - d) * q_next
+        with torch.no_grad():
+            o, a, r, o2, d = data['obs'].cuda(), data['act'].cuda(), data['rew'].cuda(), \
+                data['obs2'].cuda(), data['done'].cuda()
+            # get the Q values for best actions in next_obs, using the smaller one
+            q_next = torch.min(*dqn(o2)).max(1)[0]
+            # cal target q_s_a
+            q_target = r + gamma * (1 - d) * q_next
         # get the Q values for current observations (Q(s,a, theta_i))
         q1, q2 = dqn(o)
         q1 = q1.gather(1, a).squeeze()
@@ -130,9 +131,10 @@ def d3qn(env_fn,
         if polyak is not None:
             with torch.no_grad():
                 for p, p_targ in zip(dqn.parameters(), dqn_targ.parameters()):
-                    # use an in-place operations to update target
-                    p_targ.data.copy_(polyak * p_targ.data +
-                                      (1 - polyak) * p.data)
+                    # NB: We use an in-place operations "mul_", "add_" to update target
+                    # params, as opposed to "mul" and "add", which would make new tensors.
+                    p_targ.data.mul_(polyak)
+                    p_targ.data.add_((1 - polyak) * p.data)
 
     def test_agent():
         dqn.eval()
@@ -181,10 +183,10 @@ def d3qn(env_fn,
 
         # End of trajectory handling
         if d:
-            logger.store(EpRet=ep_ret, EpLen=ep_len)
             # success rate for robel
             if log_success:
                 logger.store(Success=int(info['score/success']))
+            logger.store(EpRet=ep_ret, EpLen=ep_len)
             o, ep_ret, ep_len = env.reset(), 0, 0
 
         # update network only reach learn_interval
@@ -193,10 +195,8 @@ def d3qn(env_fn,
                 # adjust update times according to buffer size
                 k = 1 + replay_buffer.size / replay_buffer.max_size
                 for _ in range(int(update_every * k)):
-                    # sample batch from replay buffer
                     batch = replay_buffer.sample_batch(int(batch_size * k))
-                    # update network
-                    update(batch)
+                    update(data=batch)
         else:
             logger.store(Loss=0, Q1Vals=0, Q2Vals=0)
 

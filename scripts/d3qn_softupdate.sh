@@ -1,8 +1,8 @@
 python ../main_d3qn.py \
---env LunarLander-v2 \
+--env Acrobot-v1 \
 --log-dir ../logs-d3qn-soft \
 --cpu 1 \
---lr 3e-4 \
+--lr 1e-3 \
 --epochs 100 \
 --gamma 0.99 \
 --steps-per-epoch 10000 \
