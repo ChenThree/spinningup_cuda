@@ -13,4 +13,4 @@ python main_sac.py \
 --random-steps 20000 \
 --update-every 50 \
 --validate-episodes 100 \
---reward-scale 0.3
+--reward-scale 0.5

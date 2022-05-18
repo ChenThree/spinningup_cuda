@@ -20,7 +20,7 @@ def args_parser():
     parser = argparse.ArgumentParser(description='DDPG DKiity')
     parser.add_argument('--cpu', type=int, default=1)
     parser.add_argument('--env',
-                        default='Acrobot-v1',
+                        default='LunarLander-v2',
                         type=str,
                         help='environment name')
     parser.add_argument('--mode',
@@ -29,7 +29,7 @@ def args_parser():
                         help='support option: train/test')
     parser.add_argument('--seed', default=2, type=int, help='random seed')
     parser.add_argument('--lr',
-                        default=1e-4,
+                        default=3e-4,
                         type=float,
                         help='dqn learning rate')
     parser.add_argument('--gamma', default=0.99, type=float, help='')
