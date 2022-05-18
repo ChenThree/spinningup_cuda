@@ -28,6 +28,7 @@ def d3qn(env_fn,
          replay_size=int(1e6),
          batch_size=128,
          target_update_interval=2000,
+         polyak=0.995,
          update_every=50,
          num_test_episodes=100,
          warmup=1000,
@@ -125,6 +126,14 @@ def d3qn(env_fn,
         # Record things
         logger.store(Loss=loss.item(), **loss_info)
 
+        # soft target update
+        if polyak is not None:
+            with torch.no_grad():
+                for p, p_targ in zip(dqn.parameters(), dqn_targ.parameters()):
+                    # use an in-place operations to update target
+                    p_targ.data.copy_(polyak * p_targ.data +
+                                      (1 - polyak) * p.data)
+
     def test_agent():
         dqn.eval()
         with torch.no_grad():
@@ -192,7 +201,7 @@ def d3qn(env_fn,
             logger.store(Loss=0, Q1Vals=0, Q2Vals=0)
 
         # update target Q network weights with current Q network weights
-        if t % target_update_interval == 0:
+        if polyak is None and t % target_update_interval == 0:
             dqn_targ.load_state_dict(dqn.state_dict())
 
         # End of epoch handling

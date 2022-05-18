@@ -72,6 +72,7 @@ def count_vars(module):
     return sum([np.prod(p.shape) for p in module.parameters()])
 
 
+# TwinDQN
 class MLPDoubleDQN(BaseModule):
 
     def __init__(self,
@@ -111,6 +112,7 @@ class MLPDoubleDQN(BaseModule):
         return action
 
 
+# D3QN
 class MLPDualDoubleDQN(BaseModule):
 
     def __init__(self,

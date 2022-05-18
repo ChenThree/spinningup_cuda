@@ -45,6 +45,10 @@ def args_parser():
                         default=2000,
                         type=int,
                         help='dqn target network update rate')
+    parser.add_argument('--polyak',
+                        default=None,
+                        type=float,
+                        help='dqn target network soft update coef')
     parser.add_argument(
         '--validate-episodes',
         default=100,
@@ -114,6 +118,7 @@ def main():
                  replay_size=args.replay_size,
                  gamma=args.gamma,
                  target_update_interval=args.target_update_interval,
+                 polyak=args.polyak,
                  lr=args.lr,
                  batch_size=args.batch_size,
                  eps_decay=args.eps_decay,
