@@ -11,14 +11,11 @@ import torch.nn as nn
 from spinningup import d3qn_pytorch
 from spinningup.utils.mpi_tools import mpi_fork
 
-os.environ['CUDA_VISIBLE_DEVICES'] = '0'
-torch.backends.cudnn.enabled = True
-torch.backends.cudnn.benchmark = False
-
 
 def args_parser():
     parser = argparse.ArgumentParser(description='DDPG DKiity')
     parser.add_argument('--cpu', type=int, default=1)
+    parser.add_argument('--gpu-ids', type=str, default='0')
     parser.add_argument('--model', default='mlp', type=str, help='dqn model')
     parser.add_argument('--env',
                         default='LunarLander-v2',
@@ -100,6 +97,11 @@ def args_parser():
 def main():
     # read args
     args = args_parser()
+
+    # cuda backend
+    os.environ['CUDA_VISIBLE_DEVICES'] = args.gpu_ids
+    torch.backends.cudnn.enabled = True
+    torch.backends.cudnn.benchmark = False
 
     # prepare sim env
     def env_fn():
