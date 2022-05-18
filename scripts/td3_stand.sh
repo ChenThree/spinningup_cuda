@@ -1,6 +1,6 @@
-python main_td3.py \
+python ../main_td3.py \
 --env DKittyStandRandom-v0 \
---log-dir ./logs-td3-stand-lr-0.001-bs-128-delay-2 \
+--log-dir ../logs-td3-stand-lr-0.001-bs-128-delay-2 \
 --batch-size 128 \
 --plr 0.001 \
 --qlr 0.001 \

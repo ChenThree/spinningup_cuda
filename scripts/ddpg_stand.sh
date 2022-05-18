@@ -1,6 +1,6 @@
-python main_ddpg.py \
+python ../main_ddpg.py \
 --env DKittyStandRandom-v0 \
---log-dir ./logs-ddpg \
+--log-dir ../logs-ddpg \
 --cpu 2 \
 --batch-size 128 \
 --plr 0.0001 \

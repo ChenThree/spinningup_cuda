@@ -1,6 +1,6 @@
-python main_sac.py \
+python ../main_sac.py \
 --env DKittyStandRandom-v0 \
---log-dir ./logs-sac-stand-lr-0.0001-bs-128-a-auto \
+--log-dir ../logs-sac-stand-lr-0.0001-bs-128-a-auto \
 --gpu-ids 0 \
 --cpu 1 \
 --batch-size 128 \

@@ -1,6 +1,6 @@
-python main_ppo.py \
+python ../main_ppo.py \
 --env DKittyStandRandom-v0 \
---log-dir ./logs-ppo-stand \
+--log-dir ../logs-ppo-stand \
 --cpu 2 \
 --plr 0.0003 \
 --vflr 0.001 \
