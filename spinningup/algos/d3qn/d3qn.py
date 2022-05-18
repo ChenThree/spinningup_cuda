@@ -14,11 +14,9 @@ from ...utils.mpi_pytorch import mpi_avg_grads, setup_pytorch_for_mpi, sync_para
 from ...utils.mpi_tools import mpi_avg, mpi_fork, mpi_statistics_scalar, num_procs, proc_id
 from .core import *
 
-os.environ['CUDA_VISIBLE_DEVICES'] = '0'
-
 
 def d3qn(env_fn,
-         dqn_model=MLPDoubleDQN,
+         dqn_model=MLPDualDoubleDQN,
          dqn_kwargs=dict(),
          seed=0,
          gamma=0.99,
@@ -107,12 +105,7 @@ def d3qn(env_fn,
 
     def get_action(o, eps):
         # epsilon greedy exploration
-        if random.random() > min_eps + eps:
-            with torch.no_grad():
-                q = dqn.q1(torch.as_tensor(o, dtype=torch.float32).cuda())
-                action = q.argmax(dim=0).cpu().numpy()
-        else:
-            action = env.action_space.sample()
+        action = dqn.get_action(o, eps)
         return action
 
     def update(data):
@@ -159,7 +152,7 @@ def d3qn(env_fn,
             a = env.action_space.sample()
         else:
             # get action
-            a = get_action(o, eps_threshold)
+            a = get_action(o, min_eps + eps_threshold)
             # decay eps
             logger.store(Eps=eps_threshold + min_eps)
             eps_threshold *= eps_decay

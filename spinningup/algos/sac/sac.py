@@ -421,9 +421,6 @@ def sac(env_fn,
         # Step the env
         o2, r, d, info = env.step(a)
 
-        # reward scale
-        r *= reward_scale
-
         ep_ret += r
         ep_len += 1
 
@@ -432,7 +429,7 @@ def sac(env_fn,
             d = True
 
         # Store experience to replay buffer
-        replay_buffer.store(o, a, r, o2, d)
+        replay_buffer.store(o, a, r * reward_scale, o2, d)
 
         # Super critical, easy to overlook step: make sure to update
         # most recent observation!
