@@ -19,6 +19,7 @@ torch.backends.cudnn.benchmark = False
 def args_parser():
     parser = argparse.ArgumentParser(description='DDPG DKiity')
     parser.add_argument('--cpu', type=int, default=1)
+    parser.add_argument('--model', default='mlp', type=str, help='dqn model')
     parser.add_argument('--env',
                         default='LunarLander-v2',
                         type=str,
@@ -107,11 +108,20 @@ def main():
     # run parallel code with mpi
     mpi_fork(args.cpu)
     # ddpg
+    if args.model == 'mlp':
+        dqn_kwargs = {
+            'hidden_sizes': (128, 128 * 4, 128),
+            'activation': nn.ReLU,
+        }
+    elif args.model == 'cnn':
+        dqn_kwargs = {
+            'kernels': (5, 3, 3),
+            'channels': (32, 64, 128),
+            'activation': nn.ReLU,
+        }
     d3qn_pytorch(env_fn,
-                 dqn_kwargs={
-                     'hidden_sizes': (128, 128 * 4, 128),
-                     'activation': nn.ReLU,
-                 },
+                 dqn_model=args.model,
+                 dqn_kwargs=dqn_kwargs,
                  steps_per_epoch=args.steps_per_epoch,
                  epochs=args.epochs,
                  seed=args.seed,

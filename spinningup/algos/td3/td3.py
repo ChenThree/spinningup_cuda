@@ -419,8 +419,10 @@ def td3(env_fn,
         # Update handling
         if t >= warmup:
             if t % update_every == 0:
-                for j in range(update_every):
-                    batch = replay_buffer.sample_batch(batch_size)
+                # adjust update times according to buffer size
+                k = 1 + replay_buffer.size / replay_buffer.max_size
+                for j in range(int(update_every * k)):
+                    batch = replay_buffer.sample_batch(int(batch_size * k))
                     update(data=batch, timer=j)
         else:
             logger.store(LossQ=0, LossPi=0, Q1Vals=0, Q2Vals=0)
