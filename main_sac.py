@@ -99,10 +99,6 @@ def args_parser():
                         default='./logs-sac',
                         type=str,
                         help='log dir')
-    parser.add_argument('--gpu-ids',
-                        default='0',
-                        type=str,
-                        help='pytorch gpu device id')
     return parser.parse_args()
 
 

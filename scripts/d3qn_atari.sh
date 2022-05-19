@@ -1,5 +1,5 @@
 python ../main_d3qn.py \
---env ALE/Pong \
+--env ALE/Pong-v5 \
 --model cnn \
 --log-dir ../logs-d3qn-atari \
 --cpu 1 \
