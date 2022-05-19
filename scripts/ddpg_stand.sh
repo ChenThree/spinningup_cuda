@@ -6,7 +6,7 @@ python ../main_ddpg.py \
 --plr 0.0001 \
 --qlr 0.001 \
 --polyak 0.995 \
---epochs 200 \
+--epochs 100 \
 --steps-per-epoch 10000 \
 --warmup 10000 \
 --eps-decay 200000 \

@@ -1,16 +1,18 @@
 python ../main_d3qn.py \
---env ALE/Enduro-v5 \
+--env ALE/Pong \
 --model cnn \
 --log-dir ../logs-d3qn-atari \
 --cpu 1 \
---gpu-ids 1 \
+--gpu-ids 0 \
 --lr 3e-3 \
 --epochs 100 \
 --gamma 0.99 \
---steps-per-epoch 1000 \
+--steps-per-epoch 10000 \
 --replay-size 200000 \
 --target-update-interval 2000 \
 --batch-size 128 \
 --warmup 1000 \
 --random-steps 1000 \
---eps-decay 10000
+--eps-decay 10000 \
+--update-every 50 \
+--validate-episodes 100

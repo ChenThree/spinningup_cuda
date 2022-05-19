@@ -1,5 +1,5 @@
 python ../main_d3qn.py \
---env CartPole-v1 \
+--env LunarLander-v2 \
 --log-dir ../logs-d3qn-hard \
 --cpu 1 \
 --lr 3e-3 \
@@ -11,4 +11,6 @@ python ../main_d3qn.py \
 --batch-size 128 \
 --warmup 1000 \
 --random-steps 10000 \
---eps-decay 20000
+--eps-decay 20000 \
+--update-every 50 \
+--validate-episodes 100

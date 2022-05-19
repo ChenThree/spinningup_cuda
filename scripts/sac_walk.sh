@@ -6,7 +6,7 @@ python ../main_sac.py \
 --batch-size 128 \
 --lr 0.0001 \
 --polyak 0.995 \
---epochs 500 \
+--epochs 100 \
 --replay-size 2000000 \
 --steps-per-epoch 10000 \
 --warmup 10000 \
