@@ -16,7 +16,6 @@ def args_parser():
     parser = argparse.ArgumentParser(description='D3QN')
     parser.add_argument('--cpu', type=int, default=1)
     parser.add_argument('--gpu-ids', type=str, default='0')
-    parser.add_argument('--model', default='mlp', type=str, help='dqn model')
     parser.add_argument('--env',
                         default='LunarLander-v2',
                         type=str,
@@ -105,25 +104,18 @@ def main():
 
     # prepare sim env
     def env_fn():
-        return gym.make(args.env)
+        env = gym.make(args.env)
+        env.seed(args.seed)
+        return env
 
     # run parallel code with mpi
     mpi_fork(args.cpu)
     # ddpg
-    if args.model == 'mlp':
-        dqn_kwargs = {
-            'hidden_sizes': (128, 128 * 4, 128),
-            'activation': nn.ReLU,
-        }
-    elif args.model == 'cnn':
-        dqn_kwargs = {
-            'kernels': (5, 3, 3),
-            'channels': (32, 64, 128),
-            'activation': nn.ReLU,
-        }
     d3qn_pytorch(env_fn,
-                 dqn_model=args.model,
-                 dqn_kwargs=dqn_kwargs,
+                 dqn_kwargs={
+                     'hidden_sizes': (128, 128 * 4, 128),
+                     'activation': nn.ReLU,
+                 },
                  steps_per_epoch=args.steps_per_epoch,
                  epochs=args.epochs,
                  seed=args.seed,

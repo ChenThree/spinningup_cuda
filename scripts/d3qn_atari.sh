@@ -1,13 +1,12 @@
-python ../main_d3qn.py \
---env ALE/Pong-v5 \
---model cnn \
+python ../main_d3qn_atari.py \
+--env PongNoFrameskip-v4 \
 --log-dir ../logs-d3qn-atari \
 --cpu 1 \
 --gpu-ids 0 \
---lr 3e-3 \
+--lr 3e-4 \
 --epochs 100 \
 --gamma 0.99 \
---steps-per-epoch 10000 \
+--steps-per-epoch 1000 \
 --replay-size 200000 \
 --target-update-interval 2000 \
 --batch-size 128 \

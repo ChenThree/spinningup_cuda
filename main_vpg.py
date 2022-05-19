@@ -59,7 +59,9 @@ def main():
 
     # prepare sim env
     def env_fn():
-        return gym.make(args.env)
+        env = gym.make(args.env)
+        env.seed(args.seed)
+        return env
 
     # ddpg
     vpg_pytorch(env_fn,
