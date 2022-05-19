@@ -13,7 +13,7 @@ from spinningup.utils.mpi_tools import mpi_fork
 
 
 def args_parser():
-    parser = argparse.ArgumentParser(description='DDPG DKiity')
+    parser = argparse.ArgumentParser(description='D3QN')
     parser.add_argument('--cpu', type=int, default=1)
     parser.add_argument('--gpu-ids', type=str, default='0')
     parser.add_argument('--model', default='mlp', type=str, help='dqn model')

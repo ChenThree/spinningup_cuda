@@ -10,10 +10,13 @@ import torch
 import torch.nn as nn
 
 from spinningup import td3_pytorch, test_td3_pytorch
+from spinningup.utils.mpi_tools import mpi_fork
 
 
 def args_parser():
-    parser = argparse.ArgumentParser(description='DDPG DKiity')
+    parser = argparse.ArgumentParser(description='TD3')
+    parser.add_argument('--cpu', type=int, default=1)
+    parser.add_argument('--gpu-ids', type=str, default='0')
     parser.add_argument('--env',
                         default='DKittyStandRandom-v0',
                         type=str,
@@ -102,17 +105,19 @@ def main():
     # read args
     args = args_parser()
 
+    # prepare sim env
+    def env_fn():
+        return gym.make(args.env)
+
     # cuda setting
     os.environ['CUDA_VISIBLE_DEVICES'] = args.gpu_ids
     torch.backends.cudnn.enabled = True
     torch.backends.cudnn.benchmark = False
 
-    # prepare sim env
-    def env_fn():
-        return gym.make(args.env)
-
     # td3
     if args.mode == 'train':
+        # run parallel code with mpi
+        mpi_fork(args.cpu)
         td3_pytorch(env_fn,
                     ac_kwargs={
                         'hidden_sizes': (256, 256 * 4, 256),

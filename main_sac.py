@@ -14,8 +14,9 @@ from spinningup.utils.mpi_tools import mpi_fork
 
 
 def args_parser():
-    parser = argparse.ArgumentParser(description='SAC DKiity')
+    parser = argparse.ArgumentParser(description='SAC')
     parser.add_argument('--cpu', type=int, default=1)
+    parser.add_argument('--gpu-ids', type=str, default='0')
     parser.add_argument('--env',
                         default='DKittyStandRandom-v0',
                         type=str,
@@ -109,14 +110,14 @@ def main():
     # read args
     args = args_parser()
 
+    # prepare sim env
+    def env_fn():
+        return gym.make(args.env)
+
     # cuda setting
     os.environ['CUDA_VISIBLE_DEVICES'] = args.gpu_ids
     torch.backends.cudnn.enabled = True
     torch.backends.cudnn.benchmark = False
-
-    # prepare sim env
-    def env_fn():
-        return gym.make(args.env)
 
     # sac
     if args.mode == 'train':
