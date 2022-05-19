@@ -104,7 +104,7 @@ def main():
     # prepare sim env
     def env_fn():
         env = gym.make(args.env)
-        env.seed(args.seed)
+        env.reset(seed=args.seed)
         return env
 
     # cuda setting

@@ -29,7 +29,7 @@ class ReplayBuffer:
     def __init__(self, obs_dim, act_dim, size):
         self.obs_buf = np.zeros(combined_shape(size, obs_dim), dtype=np.int8)
         self.obs2_buf = np.zeros(combined_shape(size, obs_dim), dtype=np.int8)
-        self.act_buf = np.zeros(combined_shape(size, act_dim), dtype=np.int16)
+        self.act_buf = np.zeros(combined_shape(size, act_dim), dtype=np.int8)
         self.rew_buf = np.zeros(size, dtype=np.float32)
         self.done_buf = np.zeros(size, dtype=np.bool8)
         self.ptr, self.size, self.max_size = 0, 0, size
@@ -47,7 +47,7 @@ class ReplayBuffer:
         # np.random.choice slow when not replace
         idxs = random.sample(range(0, self.size), batch_size)
         batch = dict(obs=self.obs_buf[idxs] / 255.0,
-                     obs2=self.obs2_buf[idxs / 255.0],
+                     obs2=self.obs2_buf[idxs] / 255.0,
                      act=self.act_buf[idxs],
                      rew=self.rew_buf[idxs],
                      done=self.done_buf[idxs])
