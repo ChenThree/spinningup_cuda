@@ -16,7 +16,7 @@ from .core import *
 
 
 def d3qn(env_fn,
-         dqn_model=MLPDualDoubleDQN,
+         dqn_model='mlp',
          dqn_kwargs=dict(),
          seed=0,
          gamma=0.99,
@@ -57,6 +57,10 @@ def d3qn(env_fn,
     # get environment setting
     env, test_env = env_fn(), env_fn()
     obs_dim = env.observation_space.shape
+    if dqn_model == 'cnn':
+        input_shape = (obs_dim[2], obs_dim[0], obs_dim[1])
+    else:
+        input_shape = obs_dim[0]
     act_dim = env.action_space.n
     eps_threshold = 1 - min_eps
     eps_decay = 1 - 1 / eps_decay
@@ -64,7 +68,9 @@ def d3qn(env_fn,
 
     # initialize optimizer
     criterion = loss_criterion()
-    dqn = dqn_model(env.observation_space, env.action_space, **dqn_kwargs)
+    model_dict = {'mlp': MLPDualDoubleDQN, 'cnn': CNNDualDoubleDQN}
+    dqn = model_dict[dqn_model](env.observation_space, env.action_space,
+                                **dqn_kwargs)
     dqn_targ = deepcopy(dqn)
     for para in dqn_targ.parameters():
         para.requires_grad = False
@@ -77,7 +83,9 @@ def d3qn(env_fn,
     optimizer = Adam(dqn.parameters(), lr=lr)
 
     # create replay buffer
-    replay_buffer = ReplayBuffer(obs_dim, 1, replay_size)
+    obs_type = {'mlp': np.float32, 'cnn': np.int8}
+    replay_buffer = ReplayBuffer(input_shape, 1, replay_size,
+                                 obs_type[dqn_model])
 
     # Count variables (protip: try to get a feel for how different size networks behave!)
     var_counts = tuple(count_vars(module) for module in [dqn])
@@ -183,7 +191,7 @@ def d3qn(env_fn,
             d = True
 
         # store experience
-        replay_buffer.store(o, a, r, o2, d)
+        replay_buffer.store(reshape_obs(o), a, r, d)
         o = o2
 
         # End of trajectory handling
