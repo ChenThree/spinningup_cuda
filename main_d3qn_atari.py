@@ -106,7 +106,7 @@ def main():
     # prepare sim env
     def env_fn():
         env = gym.make(args.env)
-        env.reset(seed=args.seed)
+        env.seed(args.seed)
         env = AtariPreprocessing(env=env,
                                  frame_skip=4,
                                  screen_size=84,

@@ -6,12 +6,12 @@ python ../main_d3qn_atari.py \
 --lr 3e-4 \
 --epochs 100 \
 --gamma 0.99 \
---steps-per-epoch 1000 \
+--steps-per-epoch 10000 \
 --replay-size 500000 \
 --target-update-interval 2000 \
 --batch-size 128 \
 --warmup 1000 \
 --random-steps 1000 \
---eps-decay 10000 \
+--eps-decay 100000 \
 --update-every 50 \
 --validate-episodes 100
