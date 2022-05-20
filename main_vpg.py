@@ -11,13 +11,10 @@ import torch.nn as nn
 
 from spinningup import vpg_pytorch
 
-os.environ['CUDA_VISIBLE_DEVICES'] = '0'
-torch.backends.cudnn.enabled = True
-torch.backends.cudnn.benchmark = False
-
 
 def args_parser():
     parser = argparse.ArgumentParser(description='DDPG DKiity')
+    parser.add_argument('--gpu-ids', type=str, default='0')
     parser.add_argument('--env',
                         default='DKittyStandRandom-v0',
                         type=str,
@@ -62,6 +59,11 @@ def main():
         env = gym.make(args.env)
         env.seed(args.seed)
         return env
+
+    # cuda setting
+    os.environ['CUDA_VISIBLE_DEVICES'] = args.gpu_ids
+    torch.backends.cudnn.enabled = True
+    torch.backends.cudnn.benchmark = False
 
     # ddpg
     vpg_pytorch(env_fn,
