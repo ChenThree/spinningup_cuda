@@ -95,7 +95,7 @@ class DualDoubleDQN(BaseModule):
         # using single network to choose action
         with torch.no_grad():
             features = self.features(
-                torch.as_tensor(o, dtype=torch.float32).cuda())
+                torch.as_tensor(o / 255.0, dtype=torch.float32).cuda())
             q = self.val1(features).squeeze()
         # eps exploration
         if random.random() > eps:
@@ -144,12 +144,13 @@ class CNNDualDoubleDQN(DualDoubleDQN):
                  observation_space,
                  action_space,
                  kernels=(5, 3, 3),
+                 strides=(1, 1, 1),
+                 pools=(True, False, False),
                  channels=(32, 64, 128),
                  activation=nn.ReLU):
         super().__init__()
 
-        obs_shape = observation_space.shape
-        self.input_shape = (obs_shape[2], obs_shape[0], obs_shape[1])
+        self.input_shape = observation_space.shape
         act_dim = action_space.n
 
         # set up dual double q network
@@ -157,17 +158,18 @@ class CNNDualDoubleDQN(DualDoubleDQN):
         self.features = nn.Sequential()
         for i in range(len(kernels)):
             if i == 0:
-                self.features.add_module(
-                    f'conv{i}',
-                    nn.Conv2d(obs_shape[2], channels[i], kernels[i], 2))
+                self.features.append(
+                    nn.Conv2d(self.input_shape[0], channels[i], kernels[i],
+                              strides[i]))
             else:
-                self.features.add_module(
-                    f'conv{i}',
-                    nn.Conv2d(channels[i - 1], channels[i], kernels[i]))
-            self.features.add_module(f'pool{i}', nn.MaxPool2d(4, 2))
-            self.features.add_module(f'act{i}', activation())
-        self.features.add_module(f'avrpool', nn.AdaptiveAvgPool2d((1, 1)))
-        self.features.add_module(f'flat', nn.Flatten())
+                self.features.append(
+                    nn.Conv2d(channels[i - 1], channels[i], kernels[i],
+                              strides[i]))
+            if pools[i]:
+                self.features.append(nn.MaxPool2d(4, 2))
+            self.features.append(activation())
+        self.features.append(nn.AdaptiveAvgPool2d((1, 1)))
+        self.features.append(nn.Flatten())
         # print network structure
         summary(self.features, self.input_shape, device='cpu')
         # calculate feature shape

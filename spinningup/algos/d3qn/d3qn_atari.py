@@ -101,7 +101,6 @@ def d3qn(env_fn,
     # get environment setting
     env, test_env = env_fn(), env_fn()
     obs_dim = env.observation_space.shape
-    input_shape = (obs_dim[2], obs_dim[0], obs_dim[1])
     act_dim = env.action_space.n
     eps_threshold = 1 - min_eps
     eps_decay = 1 - 1 / eps_decay
@@ -122,7 +121,7 @@ def d3qn(env_fn,
     optimizer = Adam(dqn.parameters(), lr=lr)
 
     # create replay buffer
-    replay_buffer = ReplayBuffer(input_shape, 1, replay_size)
+    replay_buffer = ReplayBuffer(obs_dim, 1, replay_size)
 
     # Count variables (protip: try to get a feel for how different size networks behave!)
     var_counts = tuple(count_vars(module) for module in [dqn])
@@ -152,8 +151,7 @@ def d3qn(env_fn,
 
     def get_action(o, eps):
         # epsilon greedy exploration
-        o = np.rollaxis(o, 2)[np.newaxis]
-        action = dqn.get_action(o, eps)
+        action = dqn.get_action(np.array(o)[np.newaxis], eps)
         return action
 
     def update(data):
@@ -224,7 +222,7 @@ def d3qn(env_fn,
             d = True
 
         # store experience
-        replay_buffer.store(np.rollaxis(o, 2), a, r, np.rollaxis(o2, 2), d)
+        replay_buffer.store(o, a, r, o2, d)
         o = o2
 
         # End of trajectory handling

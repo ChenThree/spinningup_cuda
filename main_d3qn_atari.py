@@ -9,7 +9,7 @@ import torch
 import torch.nn as nn
 
 from spinningup import d3qn_atari_pytorch
-from spinningup.algos.d3qn.atari_wrappers import AtariPreprocessing
+from spinningup.algos.d3qn.atari_wrappers import MainGymWrapper
 from spinningup.utils.mpi_tools import mpi_fork
 
 
@@ -18,7 +18,7 @@ def args_parser():
     parser.add_argument('--cpu', type=int, default=1)
     parser.add_argument('--gpu-ids', type=str, default='0')
     parser.add_argument('--env',
-                        default='PongNoFrameskip-v4',
+                        default='BreakoutNoFrameskip-v4',
                         type=str,
                         help='environment name')
     parser.add_argument('--mode',
@@ -32,15 +32,15 @@ def args_parser():
                         help='dqn learning rate')
     parser.add_argument('--gamma', default=0.99, type=float, help='')
     parser.add_argument('--batch-size',
-                        default=128,
+                        default=64,
                         type=int,
                         help='minibatch size')
     parser.add_argument('--replay-size',
-                        default=200000,
+                        default=500000,
                         type=int,
                         help='replay-size')
     parser.add_argument('--target-update-interval',
-                        default=2000,
+                        default=10000,
                         type=int,
                         help='dqn target network update rate')
     parser.add_argument('--polyak',
@@ -107,10 +107,7 @@ def main():
     def env_fn():
         env = gym.make(args.env)
         env.seed(args.seed)
-        env = AtariPreprocessing(env=env,
-                                 frame_skip=4,
-                                 screen_size=84,
-                                 grayscale_obs=False)
+        env = MainGymWrapper.wrap(env)
         return env
 
     # run parallel code with mpi
@@ -118,9 +115,11 @@ def main():
     # ddpg
     d3qn_atari_pytorch(env_fn,
                        dqn_kwargs={
-                           'kernels': (5, 3, 3),
-                           'channels': (32, 64, 128),
-                           'activation': nn.ReLU,
+                           'kernels': (21, 7, 5, 3),
+                           'strides': (2, 2, 1, 1),
+                           'pools': (False, ) * 4,
+                           'channels': (64, 128, 256, 512),
+                           'activation': nn.ReLU
                        },
                        steps_per_epoch=args.steps_per_epoch,
                        epochs=args.epochs,

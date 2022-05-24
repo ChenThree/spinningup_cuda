@@ -6,7 +6,7 @@ python ../main_td3.py \
 --qlr 0.001 \
 --policy-delay 2 \
 --polyak 0.995 \
---epochs 100 \
+--epochs 200 \
 --steps-per-epoch 10000 \
 --warmup 10000 \
 --eps-decay 200000 \
