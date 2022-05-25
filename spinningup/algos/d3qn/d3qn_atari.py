@@ -27,9 +27,9 @@ class ReplayBuffer:
     """
 
     def __init__(self, obs_dim, act_dim, size):
-        self.obs_buf = np.zeros(combined_shape(size, obs_dim), dtype=np.int8)
-        self.obs2_buf = np.zeros(combined_shape(size, obs_dim), dtype=np.int8)
-        self.act_buf = np.zeros(combined_shape(size, act_dim), dtype=np.int8)
+        self.obs_buf = np.zeros(combined_shape(size, obs_dim), dtype=np.uint8)
+        self.obs2_buf = np.zeros(combined_shape(size, obs_dim), dtype=np.uint8)
+        self.act_buf = np.zeros(combined_shape(size, act_dim), dtype=np.uint8)
         self.rew_buf = np.zeros(size, dtype=np.float32)
         self.done_buf = np.zeros(size, dtype=np.bool8)
         self.ptr, self.size, self.max_size = 0, 0, size
@@ -132,8 +132,8 @@ def d3qn(env_fn,
 
     def compute_loss(data):
         with torch.no_grad():
-            o, a, r, o2, d = data['obs'].cuda() / 255.0, data['act'].cuda(), data['rew'].cuda(), \
-                data['obs2'].cuda() / 255.0, data['done'].cuda()
+            o, a, r, o2, d = data['obs'].cuda(), data['act'].cuda(), data['rew'].cuda(), \
+                data['obs2'].cuda(), data['done'].cuda()
             # get the Q values for best actions in next_obs, using the smaller one
             q_next = torch.min(*dqn(o2)).max(1)[0]
             # cal target q_s_a

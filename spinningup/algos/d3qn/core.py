@@ -81,6 +81,7 @@ class DualDoubleDQN(BaseModule):
         super().__init__()
 
     def forward(self, x):
+        print(x.max(), x.min())
         features = self.features(x)
         q_val1 = self.val1(features)
         q_adv1 = self.adv1(features)
