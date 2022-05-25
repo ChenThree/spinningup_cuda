@@ -95,7 +95,7 @@ class DualDoubleDQN(BaseModule):
         # using single network to choose action
         with torch.no_grad():
             features = self.features(
-                torch.as_tensor(o / 255.0, dtype=torch.float32).cuda())
+                torch.as_tensor(o, dtype=torch.float32).cuda())
             q = self.val1(features).squeeze()
         # eps exploration
         if random.random() > eps:
@@ -147,7 +147,8 @@ class CNNDualDoubleDQN(DualDoubleDQN):
                  strides=(1, 1, 1),
                  pools=(True, False, False),
                  channels=(32, 64, 128),
-                 activation=nn.ReLU):
+                 activation=nn.ReLU,
+                 bn=True):
         super().__init__()
 
         self.input_shape = observation_space.shape
@@ -159,15 +160,23 @@ class CNNDualDoubleDQN(DualDoubleDQN):
         for i in range(len(kernels)):
             if i == 0:
                 self.features.append(
-                    nn.Conv2d(self.input_shape[0], channels[i], kernels[i],
-                              strides[i]))
+                    nn.Conv2d(self.input_shape[0],
+                              channels[i],
+                              kernels[i],
+                              strides[i],
+                              bias=not bn))
             else:
                 self.features.append(
-                    nn.Conv2d(channels[i - 1], channels[i], kernels[i],
-                              strides[i]))
+                    nn.Conv2d(channels[i - 1],
+                              channels[i],
+                              kernels[i],
+                              strides[i],
+                              bias=not bn))
+            if bn:
+                self.features.append(nn.BatchNorm2d(channels[i]))
+            self.features.append(activation())
             if pools[i]:
                 self.features.append(nn.MaxPool2d(4, 2))
-            self.features.append(activation())
         self.features.append(nn.AdaptiveAvgPool2d((1, 1)))
         self.features.append(nn.Flatten())
         # print network structure

@@ -119,7 +119,8 @@ def main():
                            'strides': (2, 2, 1, 1),
                            'pools': (False, ) * 4,
                            'channels': (64, 128, 256, 512),
-                           'activation': nn.ReLU
+                           'activation': nn.ReLU,
+                           'bn': True
                        },
                        steps_per_epoch=args.steps_per_epoch,
                        epochs=args.epochs,

@@ -8,10 +8,10 @@ python ../main_d3qn_atari.py \
 --gamma 0.99 \
 --steps-per-epoch 10000 \
 --replay-size 300000 \
---target-update-interval 10000 \
+--target-update-interval 2000 \
 --batch-size 32 \
 --warmup 1000 \
 --random-steps 10000 \
 --eps-decay 200000 \
---update-every 10 \
+--update-every 50 \
 --validate-episodes 100

@@ -132,8 +132,8 @@ def d3qn(env_fn,
 
     def compute_loss(data):
         with torch.no_grad():
-            o, a, r, o2, d = data['obs'].cuda(), data['act'].cuda(), data['rew'].cuda(), \
-                data['obs2'].cuda(), data['done'].cuda()
+            o, a, r, o2, d = data['obs'].cuda() / 255.0, data['act'].cuda(), data['rew'].cuda(), \
+                data['obs2'].cuda() / 255.0, data['done'].cuda()
             # get the Q values for best actions in next_obs, using the smaller one
             q_next = torch.min(*dqn(o2)).max(1)[0]
             # cal target q_s_a
@@ -151,7 +151,7 @@ def d3qn(env_fn,
 
     def get_action(o, eps):
         # epsilon greedy exploration
-        action = dqn.get_action(np.array(o)[np.newaxis], eps)
+        action = dqn.get_action(np.array(o)[np.newaxis] / 255.0, eps)
         return action
 
     def update(data):
@@ -276,37 +276,3 @@ def d3qn(env_fn,
             logger.log_tabular('Eps', average_only=True)
             logger.log_tabular('Time', time.time() - start_time)
             logger.dump_tabular()
-
-
-def log_trainning_info(dqn, env, lr, test_count):
-    # set not train mode
-    dqn.eval()
-    score_sum = 0
-    for i in range(test_count):
-        score = test(env, dqn, plot_figure=False)
-        score_sum += score
-    score_sum /= test_count
-    log_str = 'mean score == {:.3f} lr == {:.5f}\n'.format(score_sum, lr)
-    return log_str
-
-
-def test(env, Q, plot_figure):
-    # reset environment
-    score = 0
-    o, r, done = env.reset(), 0, False
-    with torch.no_grad():
-        while True:
-            # visualization
-            if plot_figure:
-                cur_map = env.show()
-                print(cur_map)
-            # inference to get action
-            a = Q.get_action(torch.from_numpy(
-                o[np.newaxis, :]).cuda()).squeeze().cpu().numpy()
-            # take action
-            o, r, done, _ = env.step(a)
-            score += r
-            # terminate
-            if done:
-                break
-    return score
