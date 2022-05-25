@@ -1,4 +1,6 @@
 python ../main_sac.py \
+--mode test \
+--resume ../logs-sac-walk-random-lr-0.0001-bs-128-a-auto/pyt_save/model400.pt \
 --env DKittyWalkRandomDynamics-v0 \
 --log-dir ../logs-sac-walk-random-lr-0.0001-bs-128-a-auto \
 --gpu-ids 0 \

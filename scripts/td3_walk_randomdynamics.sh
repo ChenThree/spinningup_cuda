@@ -1,4 +1,6 @@
 python ../main_td3.py \
+--mode test \
+--resume ../logs-td3-walk-random-lr-0.001-bs-128-delay-2/pyt_save/model200.pt \
 --env DKittyWalkRandomDynamics-v0 \
 --log-dir ../logs-td3-walk-random-lr-0.001-bs-128-delay-2 \
 --batch-size 128 \

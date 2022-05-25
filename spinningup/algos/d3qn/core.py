@@ -38,17 +38,17 @@ class MLPDoubleDQN(BaseModule):
                  activation=nn.ReLU):
         super().__init__()
 
-        obs_dim = observation_space.shape[0]
-        act_dim = action_space.n
+        self.obs_dim = observation_space.shape[0]
+        self.act_dim = action_space.n
 
         # set up double q network
         # feature network
-        feature_sizes = [obs_dim] + list(hidden_sizes)
+        feature_sizes = [self.obs_dim] + list(hidden_sizes)
         self.features = mlp(feature_sizes,
                             activation,
                             output_activation=activation)
         # value network
-        value_sizes = [hidden_sizes[-1], hidden_sizes[-1], act_dim]
+        value_sizes = [hidden_sizes[-1], hidden_sizes[-1], self.act_dim]
         self.q1 = mlp(value_sizes, activation)
         self.q2 = mlp(value_sizes, activation)
         # init
@@ -71,6 +71,7 @@ class MLPDoubleDQN(BaseModule):
         else:
             action_prob = F.softmax(q, dim=0)
             action = torch.multinomial(action_prob, num_samples=1).squeeze()
+            # return np.random.randint(0, self.act_dim)
         return action.cpu().numpy()
 
 
@@ -81,7 +82,6 @@ class DualDoubleDQN(BaseModule):
         super().__init__()
 
     def forward(self, x):
-        print(x.max(), x.min())
         features = self.features(x)
         q_val1 = self.val1(features)
         q_adv1 = self.adv1(features)
@@ -104,6 +104,7 @@ class DualDoubleDQN(BaseModule):
         else:
             action_prob = F.softmax(q, dim=0)
             action = torch.multinomial(action_prob, num_samples=1).squeeze()
+            # return np.random.randint(0, self.act_dim)
         return action.cpu().numpy()
 
 
@@ -116,17 +117,17 @@ class MLPDualDoubleDQN(DualDoubleDQN):
                  activation=nn.ReLU):
         super().__init__()
 
-        obs_dim = observation_space.shape[0]
-        act_dim = action_space.n
+        self.obs_dim = observation_space.shape[0]
+        self.act_dim = action_space.n
 
         # set up dual double q network
         # feature network
-        feature_sizes = [obs_dim] + list(hidden_sizes)
+        feature_sizes = [self.obs_dim] + list(hidden_sizes)
         self.features = mlp(feature_sizes,
                             activation,
                             output_activation=activation)
         # value network
-        value_sizes = [hidden_sizes[-1], hidden_sizes[-1], act_dim]
+        value_sizes = [hidden_sizes[-1], hidden_sizes[-1], self.act_dim]
         self.val1 = mlp(value_sizes, activation)
         self.val2 = mlp(value_sizes, activation)
         # advantage network
@@ -153,7 +154,7 @@ class CNNDualDoubleDQN(DualDoubleDQN):
         super().__init__()
 
         self.input_shape = observation_space.shape
-        act_dim = action_space.n
+        self.act_dim = action_space.n
 
         # set up dual double q network
         # feature network
@@ -186,7 +187,7 @@ class CNNDualDoubleDQN(DualDoubleDQN):
         feature_size = channels[-1]
         print('feature size ==', feature_size)
         # value network
-        value_sizes = [feature_size, feature_size, act_dim]
+        value_sizes = [feature_size, feature_size, self.act_dim]
         self.val1 = mlp(value_sizes, activation)
         self.val2 = mlp(value_sizes, activation)
         # advantage network

@@ -9,7 +9,7 @@ import torch
 import torch.nn as nn
 
 from spinningup import d3qn_atari_pytorch
-from spinningup.algos.d3qn.atari_wrappers import MainGymWrapper
+from spinningup.algos.d3qn.atari_wrappers import AtariWrapper
 from spinningup.utils.mpi_tools import mpi_fork
 
 
@@ -104,10 +104,18 @@ def main():
     torch.backends.cudnn.benchmark = False
 
     # prepare sim env
-    def env_fn():
-        env = gym.make(args.env)
+    def env_fn(render=False):
+        if render:
+            env = gym.make(args.env, render_mode='human')
+        else:
+            env = gym.make(args.env)
         env.seed(args.seed)
-        env = MainGymWrapper.wrap(env)
+        env = AtariWrapper(env,
+                           noop_max=30,
+                           frame_skip=4,
+                           screen_size=84,
+                           terminal_on_life_loss=True,
+                           clip_reward=False)
         return env
 
     # run parallel code with mpi
@@ -115,10 +123,10 @@ def main():
     # ddpg
     d3qn_atari_pytorch(env_fn,
                        dqn_kwargs={
-                           'kernels': (21, 7, 5, 3),
-                           'strides': (2, 2, 1, 1),
-                           'pools': (False, ) * 4,
-                           'channels': (64, 128, 256, 512),
+                           'kernels': (19, 7, 5),
+                           'strides': (4, 2, 1),
+                           'pools': (False, ) * 3,
+                           'channels': (32, 64, 128),
                            'activation': nn.ReLU,
                            'bn': True
                        },

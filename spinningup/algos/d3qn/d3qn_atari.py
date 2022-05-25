@@ -102,6 +102,8 @@ def d3qn(env_fn,
     env, test_env = env_fn(), env_fn()
     obs_dim = env.observation_space.shape
     act_dim = env.action_space.n
+    print('obs_dim ==', obs_dim)
+    print('act_dim ==', act_dim)
     eps_threshold = 1 - min_eps
     eps_decay = 1 - 1 / eps_decay
     logger.store(Eps=eps_threshold + min_eps)
@@ -151,7 +153,7 @@ def d3qn(env_fn,
 
     def get_action(o, eps):
         # epsilon greedy exploration
-        action = dqn.get_action(np.array(o)[np.newaxis] / 255.0, eps)
+        action = dqn.get_action(o[np.newaxis] / 255.0, eps)
         return action
 
     def update(data):
