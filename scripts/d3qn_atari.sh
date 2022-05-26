@@ -1,5 +1,5 @@
 python ../main_d3qn_atari.py \
---env ALE/BreakoutNoFrameskip-v4 \
+--env BreakoutNoFrameskip-v4 \
 --log-dir ../logs-d3qn-atari \
 --cpu 1 \
 --gpu-ids 0 \
