@@ -123,12 +123,12 @@ def main():
     # ddpg
     d3qn_atari_pytorch(env_fn,
                        dqn_kwargs={
-                           'kernels': (19, 7, 5),
+                           'kernels': (13, 7, 5),
                            'strides': (4, 2, 1),
                            'pools': (False, ) * 3,
                            'channels': (32, 64, 128),
                            'activation': nn.ReLU,
-                           'bn': True
+                           'bn': False
                        },
                        steps_per_epoch=args.steps_per_epoch,
                        epochs=args.epochs,
