@@ -18,7 +18,7 @@ def args_parser():
     parser.add_argument('--cpu', type=int, default=1)
     parser.add_argument('--gpu-ids', type=str, default='0')
     parser.add_argument('--env',
-                        default='BreakoutNoFrameskip-v4',
+                        default='PongNoFrameskip-v4',
                         type=str,
                         help='environment name')
     parser.add_argument('--mode',

@@ -1,18 +1,17 @@
 python ../main_d3qn_atari.py \
---env Breakout \
+--env PongNoFrameskip-v4 \
 --log-dir ../logs-d3qn-atari \
 --cpu 1 \
 --gpu-ids 0 \
 --lr 3e-4 \
---epochs 200 \
+--epochs 1000 \
 --gamma 0.99 \
 --steps-per-epoch 10000 \
---replay-size 200000 \
+--replay-size 300000 \
 --target-update-interval 1000 \
 --batch-size 32 \
 --warmup 1000 \
 --random-steps 10000 \
 --eps-decay 200000 \
 --update-every 50 \
---validate-episodes 50 \
---max-episode-length 2000
+--validate-episodes 100
