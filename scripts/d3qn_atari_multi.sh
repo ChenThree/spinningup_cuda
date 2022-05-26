@@ -1,0 +1,18 @@
+python ../main_d3qn_atari.py \
+--env Breakout \
+--log-dir ../logs-d3qn-atari-multi \
+--cpu 2 \
+--gpu-ids 0 \
+--lr 3e-4 \
+--epochs 200 \
+--gamma 0.99 \
+--steps-per-epoch 10000 \
+--replay-size 500000 \
+--target-update-interval 2000 \
+--batch-size 32 \
+--warmup 1000 \
+--random-steps 10000 \
+--eps-decay 200000 \
+--update-every 50 \
+--validate-episodes 100 \
+--max-episode-length 2000

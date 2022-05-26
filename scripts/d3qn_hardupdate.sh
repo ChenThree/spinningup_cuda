@@ -5,12 +5,12 @@ python ../main_d3qn.py \
 --lr 3e-4 \
 --epochs 100 \
 --gamma 0.99 \
---steps-per-epoch 10000 \
---replay-size 1000000 \
---target-update-interval 2000 \
---batch-size 128 \
+--steps-per-epoch 1000 \
+--replay-size 100000 \
+--target-update-interval 200 \
+--batch-size 64 \
 --warmup 1000 \
---random-steps 10000 \
---eps-decay 20000 \
---update-every 50 \
+--random-steps 1000 \
+--eps-decay 5000 \
+--update-every 10 \
 --validate-episodes 100
