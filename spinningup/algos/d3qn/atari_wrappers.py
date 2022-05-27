@@ -257,19 +257,20 @@ class AtariWrapper(gym.Wrapper):
     :param clip_reward: If True (default), the reward is clip to {-1, 0, 1} depending on its sign.
     """
 
-    def __init__(
-        self,
-        env: gym.Env,
-        noop_max: int = 30,
-        frame_skip: int = 4,
-        screen_size: int = 84,
-        terminal_on_life_loss: bool = True,
-        clip_reward: bool = True,
-    ):
+    def __init__(self,
+                 env: gym.Env,
+                 noop_max: int = 30,
+                 frame_skip: int = 4,
+                 screen_size: int = 84,
+                 terminal_on_life_loss: bool = True,
+                 clip_reward: bool = True,
+                 stack: bool = True):
         env = NoopResetEnv(env, noop_max=noop_max)
         env = WarpFrame(env, width=screen_size, height=screen_size)
-        # env = MaxAndSkipEnv(env, skip=frame_skip)
-        env = FrameStack(env, skip=frame_skip)
+        if stack:
+            env = FrameStack(env, skip=frame_skip)
+        else:
+            env = MaxAndSkipEnv(env, skip=frame_skip)
         if terminal_on_life_loss:
             env = EpisodicLifeEnv(env)
         if "FIRE" in env.unwrapped.get_action_meanings():

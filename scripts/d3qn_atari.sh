@@ -7,7 +7,7 @@ python ../main_d3qn_atari.py \
 --epochs 1000 \
 --gamma 0.99 \
 --steps-per-epoch 10000 \
---replay-size 300000 \
+--replay-size 400000 \
 --target-update-interval 1000 \
 --batch-size 32 \
 --warmup 1000 \

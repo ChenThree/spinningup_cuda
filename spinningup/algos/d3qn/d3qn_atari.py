@@ -26,9 +26,12 @@ class ReplayBuffer:
     A simple FIFO experience replay buffer for DDPG agents.
     """
 
-    def __init__(self, obs_dim, act_dim, size):
+    def __init__(self, obs_dim, act_dim, size, opt_mem=True):
+        self.opt_mem = opt_mem
         self.obs_buf = np.zeros(combined_shape(size, obs_dim), dtype=np.uint8)
-        self.obs2_buf = np.zeros(combined_shape(size, obs_dim), dtype=np.uint8)
+        if not opt_mem:
+            self.obs2_buf = np.zeros(combined_shape(size, obs_dim),
+                                     dtype=np.uint8)
         self.act_buf = np.zeros(combined_shape(size, act_dim), dtype=np.uint8)
         self.rew_buf = np.zeros(size, dtype=np.float16)
         self.done_buf = np.zeros(size, dtype=np.bool8)
@@ -36,7 +39,8 @@ class ReplayBuffer:
 
     def store(self, obs, act, rew, next_obs, done):
         self.obs_buf[self.ptr] = obs
-        self.obs2_buf[self.ptr] = next_obs
+        if not self.opt_mem:
+            self.obs2_buf[self.ptr] = next_obs
         self.act_buf[self.ptr] = act
         self.rew_buf[self.ptr] = rew
         self.done_buf[self.ptr] = done
@@ -46,11 +50,19 @@ class ReplayBuffer:
     def sample_batch(self, batch_size=32):
         # np.random.choice slow when not replace
         idxs = random.sample(range(0, self.size), batch_size)
-        batch = dict(obs=self.obs_buf[idxs] / 255.0,
-                     obs2=self.obs2_buf[idxs] / 255.0,
-                     act=self.act_buf[idxs],
-                     rew=self.rew_buf[idxs],
-                     done=self.done_buf[idxs])
+        if self.opt_mem:
+            next_idxs = (np.array(idxs) + 1) % self.max_size
+            batch = dict(obs=self.obs_buf[idxs] / 255.0,
+                         obs2=self.obs_buf[next_idxs] / 255.0,
+                         act=self.act_buf[idxs],
+                         rew=self.rew_buf[idxs],
+                         done=self.done_buf[idxs])
+        else:
+            batch = dict(obs=self.obs_buf[idxs] / 255.0,
+                         obs2=self.obs2_buf[idxs] / 255.0,
+                         act=self.act_buf[idxs],
+                         rew=self.rew_buf[idxs],
+                         done=self.done_buf[idxs])
         return {
             k:
             torch.as_tensor(v,
@@ -123,7 +135,7 @@ def d3qn(env_fn,
     optimizer = Adam(dqn.parameters(), lr=lr)
 
     # create replay buffer
-    replay_buffer = ReplayBuffer(obs_dim, 1, replay_size)
+    replay_buffer = ReplayBuffer(obs_dim, 1, replay_size, opt_mem=True)
 
     # Count variables (protip: try to get a feel for how different size networks behave!)
     var_counts = tuple(count_vars(module) for module in [dqn])

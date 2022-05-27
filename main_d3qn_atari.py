@@ -115,7 +115,8 @@ def main():
                            frame_skip=4,
                            screen_size=84,
                            terminal_on_life_loss=True,
-                           clip_reward=False)
+                           clip_reward=False,
+                           stack=False)
         return env
 
     # run parallel code with mpi
