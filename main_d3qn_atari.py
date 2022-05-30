@@ -116,7 +116,7 @@ def main():
                            screen_size=84,
                            terminal_on_life_loss=True,
                            clip_reward=False,
-                           stack=False)
+                           stack=True)
         return env
 
     # run parallel code with mpi
@@ -124,10 +124,10 @@ def main():
     # ddpg
     d3qn_atari_pytorch(env_fn,
                        dqn_kwargs={
-                           'kernels': (13, 7, 5),
-                           'strides': (4, 2, 1),
-                           'pools': (False, ) * 3,
-                           'channels': (32, 64, 128),
+                           'kernels': (15, 9, 7, 5),
+                           'strides': (2, 2, 1, 1),
+                           'pools': (False, ) * 4,
+                           'channels': (32, 64, 128, 256),
                            'activation': nn.ReLU,
                            'bn': False
                        },
