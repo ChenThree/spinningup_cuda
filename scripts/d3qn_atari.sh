@@ -1,8 +1,8 @@
 python ../main_d3qn_atari.py \
 --env BreakoutNoFrameskip-v4 \
 --log-dir ../logs-d3qn-atari-bs128 \
---cpu 4 \
---gpu-ids 5 \
+--cpu 1 \
+--gpu-ids 0 \
 --lr 3e-4 \
 --epochs 1000 \
 --gamma 0.99 \

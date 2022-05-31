@@ -150,7 +150,8 @@ class CNNDualDoubleDQN(DualDoubleDQN):
                  pools=(True, False, False),
                  channels=(32, 64, 128),
                  activation=nn.ReLU,
-                 bn=True):
+                 bn=True,
+                 avpool=True):
         super().__init__()
 
         self.input_shape = observation_space.shape
@@ -179,12 +180,13 @@ class CNNDualDoubleDQN(DualDoubleDQN):
             self.features.append(activation())
             if pools[i]:
                 self.features.append(nn.MaxPool2d(4, 2))
-        self.features.append(nn.AdaptiveAvgPool2d((1, 1)))
+        if avpool:
+            self.features.append(nn.AdaptiveAvgPool2d((1, 1)))
         self.features.append(nn.Flatten())
         # print network structure
         summary(self.features, self.input_shape, device='cpu')
         # calculate feature shape
-        feature_size = channels[-1]
+        feature_size = 1024
         print('feature size ==', feature_size)
         # value network
         value_sizes = [feature_size, feature_size, self.act_dim]
